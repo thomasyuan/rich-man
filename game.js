@@ -1446,11 +1446,11 @@ function renderPortfolioRail() {
               : "UTILITY";
 
           return `
-            <div class="land-card" style="--land-color:${groupColor}">
+            <button class="land-card${tile.mortgaged ? " is-mortgaged" : ""}" type="button" data-deed="${index}" style="--land-color:${groupColor}" title="View deed for ${esc(tile.name)}">
               <span class="land-card-band"></span>
-              <span class="land-card-name">${esc(tile.short)}</span>
+              <span class="land-card-name">${esc(tile.name)}</span>
               <span class="land-card-meta"><span>${meta}</span><span class="land-house-row">${houseMarkup}</span></span>
-            </div>
+            </button>
           `;
         }).join("");
 
@@ -2476,11 +2476,17 @@ function showDeedModal(tile, options) {
         ? "RAILROAD"
         : "UTILITY";
 
+    const viewRent = mode === "view" && owner ? (tile.mortgaged ? 0 : calculateRent(tile, owner, 7)) : 0;
+
     let intro = "";
     if (mode === "buy") {
       intro = `<p class="deed-intro">Unowned and open for business. Add it to your portfolio, or let it slip away.</p>`;
     } else if (mode === "rent") {
       intro = `<p class="deed-intro">${esc(owner.name)} holds the deed. Landing here costs you <strong>${money(rent)}</strong>${multiplier > 1 ? " (double rent)" : utilityTenfold ? " (ten times the dice)" : ""}.</p>`;
+    } else if (mode === "view") {
+      intro = tile.mortgaged
+        ? `<p class="deed-intro"><strong>${esc(tile.name)}</strong> is mortgaged. The mortgage is <strong>${money(mortgageValue(tile))}</strong>; lifting it costs <strong>${money(unmortgageCost(tile))}</strong>. No rent is due while mortgaged.</p>`
+        : `<p class="deed-intro">A fine piece of the skyline. The details are below.</p>`;
     } else {
       intro = `<p class="deed-intro">A fine piece of the skyline. The details are below.</p>`;
     }
@@ -2504,13 +2510,17 @@ function showDeedModal(tile, options) {
       actionHtml = `<button class="btn btn-primary" type="button" data-close-deed data-autofocus>BACK TO THE GAME</button>`;
     }
 
+    if (mode === "view") {
+      actionHtml = `<button class="btn btn-primary" type="button" data-close-deed data-autofocus>CLOSE DEED</button>`;
+    }
+
     const ownerLine = owner
       ? `<div class="deed-ownerline">
           <div class="deed-ownerline-left">
             <span class="deed-owner-avatar">${owner.avatar}</span>
             <span>DEED HOLDER · ${esc(owner.name)}</span>
           </div>
-          <span class="deed-price-tag">${mode === "rent" ? money(rent) : money(tile.price)}</span>
+          <span class="deed-price-tag">${mode === "rent" ? money(rent) : mode === "view" && tile.mortgaged ? `MORTGAGED ${money(mortgageValue(tile))}` : money(tile.price)}</span>
         </div>`
       : `<div class="deed-ownerline">
           <div class="deed-ownerline-left"><span>STATUS</span></div>
@@ -2520,7 +2530,7 @@ function showDeedModal(tile, options) {
     const title = tile.name;
     const lightBand = tile.type === "property" && (tile.group === "lightblue" || tile.group === "yellow");
     const rentTable = owner
-      ? rentRows(tile, owner, rent)
+      ? rentRows(tile, owner, mode === "view" ? viewRent : rent)
       : rentRowsPreview(tile);
 
     const { overlay, close } = mountOverlay(`
@@ -2537,7 +2547,8 @@ function showDeedModal(tile, options) {
       </div>
     `, {
       cardClass: "deed-modal",
-      dismissible: false,
+      dismissible: mode === "view",
+      onClose: () => resolve(false),
     });
 
     if (mode === "buy") {
@@ -3883,6 +3894,16 @@ function bindEvents() {
       event.preventDefault();
       els.startingCashInput.blur();
     }
+  });
+
+  els.portfolioList.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-deed]");
+    if (!card || !game) return;
+    const tile = game.board[Number(card.dataset.deed)];
+    const owner = tile.owner !== null ? game.players[tile.owner] : null;
+    ensureAudio();
+    playSound("click");
+    showDeedModal(tile, { mode: "view", owner });
   });
 
   els.startBtn.addEventListener("click", startGameFromSetup);

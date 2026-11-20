@@ -1097,7 +1097,17 @@ input:focus-visible {
   color: var(--ink);
   border-right: 1px solid rgba(26, 43, 34, 0.19);
   border-bottom: 1px solid rgba(26, 43, 34, 0.19);
-  transition: box-shadow 220ms ease, filter 220ms ease;
+  transition: box-shadow 220ms ease, filter 220ms ease, transform 180ms ease;
+}
+
+.tile:hover {
+  z-index: 90;
+  transform: scale(2);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(213, 175, 95, 0.36);
+}
+
+.board:has(.tile:hover) {
+  overflow: visible;
 }
 
 .tile.side-top {
@@ -2126,7 +2136,8 @@ input:focus-visible {
 
 .portfolio-player {
   --pcolor: #e05a5a;
-  padding: 10px 0;
+  position: relative;
+  padding: 16px 0;
   border-top: 1px solid rgba(232, 214, 177, 0.065);
 }
 
@@ -2155,15 +2166,15 @@ input:focus-visible {
 
 .portfolio-head {
   display: grid;
-  grid-template-columns: 27px minmax(0, 1fr) auto;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 7px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .portfolio-avatar {
-  width: 27px;
-  height: 27px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.17);
@@ -2187,26 +2198,21 @@ input:focus-visible {
   overflow: hidden;
   color: var(--cream);
   font-family: var(--serif);
-  font-size: 12px;
+  font-size: 17px;
   font-weight: 500;
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.05;
 }
 
 .portfolio-name span {
-  overflow: hidden;
   color: rgba(219, 205, 176, 0.42);
   font-family: var(--mono);
-  font-size: 6.3px;
+  font-size: 9.5px;
   letter-spacing: -0.01em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .portfolio-live {
   color: var(--pcolor);
-  font-size: 5.2px;
+  font-size: 8.5px;
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.09em;
@@ -2221,57 +2227,69 @@ input:focus-visible {
 }
 
 .portfolio-group {
+  position: relative;
   margin-top: 6px;
 }
 
 .portfolio-group-head {
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-bottom: 3px;
-  color: rgba(222, 205, 172, 0.4);
-  font-size: 5.8px;
+  gap: 7px;
+  margin-bottom: 5px;
+  color: rgba(222, 205, 172, 0.45);
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.13em;
   text-transform: uppercase;
 }
 
 .portfolio-group-head i {
-  width: 7px;
-  height: 7px;
-  border-radius: 1.5px;
+  width: 11px;
+  height: 11px;
+  border-radius: 2.5px;
   background: var(--group-color);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .portfolio-group-head small {
   margin-left: auto;
-  color: rgba(222, 205, 172, 0.27);
+  color: rgba(222, 205, 172, 0.32);
   font-family: var(--mono);
-  font-size: 5px;
+  font-size: 8px;
   letter-spacing: 0;
 }
 
 .portfolio-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .land-card {
   position: relative;
   min-width: 0;
-  min-height: 40px;
+  min-height: 78px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 6px 4px 3px;
+  padding: 10px 8px 6px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 3px;
+  border-radius: 5px;
   background: linear-gradient(150deg, #f4ead6, #dfd2b7);
   color: var(--ink);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.24);
+}
+
+button.land-card {
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.land-card.is-mortgaged {
+  background: linear-gradient(150deg, #d7d6d2, #b2b2b7);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .land-card-band {
@@ -2279,49 +2297,61 @@ input:focus-visible {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 5px;
   background: var(--land-color);
 }
 
+.land-card.is-mortgaged .land-card-band {
+  background: #8b8d93;
+}
+
 .land-card-name {
-  overflow: hidden;
+  overflow: visible;
   color: #1a2c22;
-  font-size: 6.3px;
+  font-size: 11.5px;
   font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: 0.01em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.land-card.is-mortgaged .land-card-name {
+  color: #4e5258;
 }
 
 .land-card-meta {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 3px;
-  margin-top: 3px;
-  color: rgba(26, 43, 34, 0.46);
+  gap: 4px;
+  margin-top: 6px;
+  color: rgba(26, 43, 34, 0.52);
   font-family: var(--mono);
-  font-size: 5.2px;
+  font-size: 9.5px;
   font-weight: 600;
+}
+
+.land-card.is-mortgaged .land-card-meta {
+  color: rgba(58, 60, 66, 0.62);
 }
 
 .land-house-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
 }
 
 .land-house {
-  width: 3px;
-  height: 3px;
-  border-radius: 0.5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
   background: #2b8057;
 }
 
 .land-house.hotel {
-  width: 7px;
-  height: 3px;
+  width: 12px;
+  height: 5px;
   background: #b94c3e;
 }
 
@@ -2405,8 +2435,9 @@ input:focus-visible {
 
 .tycoon-row {
   --pcolor: #e05a5a;
-  padding: 7px 0;
-  border-bottom: 1px solid rgba(232, 214, 177, 0.055);
+  position: relative;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(232, 214, 177, 0.08);
 }
 
 .tycoon-row.is-active {
@@ -2423,20 +2454,20 @@ input:focus-visible {
 
 .tycoon-main {
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) auto;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px;
+  gap: 9px;
 }
 
 .tycoon-avatar {
-  width: 22px;
-  height: 22px;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
   background: color-mix(in srgb, var(--pcolor) 36%, #071a11);
-  font-size: 10px;
+  font-size: 15px;
   line-height: 1;
 }
 
@@ -2446,30 +2477,24 @@ input:focus-visible {
 
 .tycoon-copy strong {
   display: block;
-  overflow: hidden;
-  color: rgba(246, 237, 220, 0.8);
+  color: rgba(246, 237, 220, 0.9);
   font-family: var(--serif);
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 500;
-  line-height: 1.1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.15;
 }
 
 .tycoon-copy small {
   display: block;
-  overflow: hidden;
-  margin-top: 2px;
-  color: rgba(220, 205, 175, 0.38);
-  font-size: 6.1px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  margin-top: 3px;
+  color: rgba(220, 205, 175, 0.42);
+  font-size: 9.5px;
 }
 
 .tycoon-cash {
   color: var(--gold-bright);
   font-family: var(--mono);
-  font-size: 8.5px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: -0.05em;
   white-space: nowrap;
@@ -2478,30 +2503,30 @@ input:focus-visible {
 .tycoon-buildings {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 5px;
-  padding-left: 28px;
+  gap: 6px;
+  margin-top: 9px;
+  padding-left: 43px;
 }
 
 .building-chip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 3px 6px;
-  border: 1px solid rgba(105, 191, 140, 0.18);
+  gap: 5px;
+  padding: 6px 10px;
+  border: 1px solid rgba(105, 191, 140, 0.24);
   border-radius: 999px;
-  background: rgba(72, 148, 106, 0.08);
-  color: rgba(174, 223, 193, 0.7);
+  background: rgba(72, 148, 106, 0.12);
+  color: rgba(174, 223, 193, 0.78);
   font-family: var(--mono);
-  font-size: 6.1px;
+  font-size: 10.5px;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .building-chip i {
-  width: 5px;
-  height: 6px;
-  border-radius: 0.5px;
+  width: 8px;
+  height: 9px;
+  border-radius: 1px;
   background: #5dc08a;
 }
 
@@ -2512,14 +2537,14 @@ input:focus-visible {
 }
 
 .building-chip.hotel-chip i {
-  width: 9px;
-  height: 6px;
+  width: 14px;
+  height: 9px;
   background: #dc7668;
 }
 
 .building-chip b {
   color: var(--cream);
-  font-size: 7px;
+  font-size: 12px;
 }
 
 .drawer-backdrop {
@@ -5661,7 +5686,7 @@ input:focus-visible {
   }
 
   .trade-asset-copy strong {
-    font-size: 15px;
+    font-size: 18px;
   }
 
   .trade-asset-copy small {
@@ -5669,7 +5694,7 @@ input:focus-visible {
   }
 
   .trade-asset-value {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .trade-vs {
@@ -5722,9 +5747,9 @@ input:focus-visible {
   }
 
   .trade-offer-item {
-    gap: 9px;
-    padding: 8px 0;
-    font-size: 12.5px;
+    gap: 10px;
+    padding: 10px 0;
+    font-size: 15px;
   }
 
   .trade-offer-item i {
@@ -5733,7 +5758,7 @@ input:focus-visible {
   }
 
   .trade-offer-item strong {
-    font-size: 9px;
+    font-size: 13px;
   }
 
   .trade-offer-none {
