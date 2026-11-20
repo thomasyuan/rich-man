@@ -1102,8 +1102,97 @@ input:focus-visible {
 
 .tile:hover {
   z-index: 90;
-  transform: scale(2);
+  overflow: visible;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.5), transparent 46%),
+    var(--paper);
   box-shadow: 0 18px 34px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(213, 175, 95, 0.36);
+}
+
+.tile:hover .tile-content {
+  gap: 1.2%;
+  padding: 4%;
+}
+
+.tile.side-bottom:hover .tile-content {
+  padding-top: 28%;
+}
+
+.tile.side-top:hover .tile-content {
+  padding-bottom: 28%;
+}
+
+.tile.side-left:hover .tile-content {
+  padding-right: 30%;
+}
+
+.tile.side-right:hover .tile-content {
+  padding-left: 30%;
+}
+
+.tile:hover .tile-name,
+.tile:hover .tile-utility .tile-name,
+.tile:hover .tile-railroad .tile-name,
+.tile:hover .tile-name.is-tight,
+.tile:hover .tile-name.is-tighter {
+  font-size: clamp(11px, 1.05cqw, 18px);
+  letter-spacing: 0.015em;
+  line-height: 1.12;
+}
+
+.tile:hover .tile-price,
+.tile:hover .tile-price.is-tight {
+  font-size: clamp(13px, 1.45cqw, 23px);
+  letter-spacing: -0.02em;
+}
+
+.tile:hover .tile .tile-kicker,
+.tile:hover .tile-kicker {
+  font-size: clamp(10px, 0.9cqw, 15px);
+}
+
+.tile:hover .tile-icon {
+  font-size: clamp(24px, 2.8cqw, 40px);
+}
+
+.tile:hover .chance-mark,
+.tile:hover .chest-mark,
+.tile:hover .tax-mark {
+  font-size: clamp(20px, 2.5cqw, 34px);
+  width: clamp(46px, 5.5cqw, 74px);
+  height: clamp(46px, 5.5cqw, 74px);
+  margin-bottom: 4%;
+}
+
+.tile:hover .corner-title {
+  font-size: clamp(22px, 2.9cqw, 44px);
+}
+
+.tile:hover .corner-sub,
+.tile:hover .corner-icon {
+  font-size: clamp(9px, 0.9cqw, 15px);
+}
+
+.tile:hover .tile-band {
+  height: 30%;
+  border-width: 2px;
+}
+
+.tile:hover .tile-houses {
+  gap: 1.5%;
+}
+
+.tile:hover .house-pip,
+.tile:hover .house-pip.hotel {
+  width: 2.4cqw;
+  height: 2.4cqw;
+  border-radius: 0.4cqw;
+}
+
+.tile:hover .tile-owner-dot {
+  width: 6.4cqw;
+  height: 6.4cqw;
+  font-size: 3.6cqw;
 }
 
 .board:has(.tile:hover) {
@@ -3635,6 +3724,156 @@ button.land-card {
   background: rgba(130, 48, 39, 0.07);
 }
 
+.asset-mortgage-info {
+  margin-top: 4px;
+  padding: 5px 9px;
+  border: 1px dashed rgba(218, 127, 111, 0.3);
+  border-radius: 8px;
+  color: rgba(241, 159, 144, 0.78);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.asset-confirm-card {
+  width: min(720px, 92vw);
+  padding: clamp(22px, 3vw, 34px);
+}
+
+.asset-confirm-body {
+  margin: 20px 0;
+}
+
+.asset-confirm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.asset-confirm-tile {
+  padding: 14px 16px;
+  border: 1px solid rgba(232, 214, 177, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.asset-confirm-tile.is-value,
+.asset-confirm-tile.is-after {
+  border-color: rgba(213, 175, 95, 0.35);
+  background: rgba(213, 175, 95, 0.08);
+}
+
+.asset-confirm-tile span {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(222, 204, 169, 0.42);
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.asset-confirm-tile strong {
+  color: var(--gold-bright);
+  font-family: var(--mono);
+  font-size: 20px;
+  letter-spacing: -0.04em;
+}
+
+.asset-confirm-text {
+  margin: 14px 0 10px;
+  color: rgba(244, 234, 214, 0.7);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.asset-confirm-text strong {
+  color: var(--cream);
+  font-weight: 800;
+}
+
+.asset-confirm-note {
+  color: rgba(222, 204, 169, 0.4);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+}
+
+.asset-mortgage-info {
+  margin-top: 4px;
+  padding: 5px 9px;
+  border: 1px dashed rgba(218, 127, 111, 0.3);
+  border-radius: 8px;
+  color: rgba(241, 159, 144, 0.78);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 700;
+}
+
+.asset-confirm-card {
+  width: min(720px, 92vw);
+  padding: clamp(22px, 3vw, 34px);
+}
+
+.asset-confirm-body {
+  margin: 20px 0;
+}
+
+.asset-confirm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.asset-confirm-tile {
+  padding: 14px 16px;
+  border: 1px solid rgba(232, 214, 177, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.asset-confirm-tile.is-value,
+.asset-confirm-tile.is-after {
+  border-color: rgba(213, 175, 95, 0.35);
+  background: rgba(213, 175, 95, 0.08);
+}
+
+.asset-confirm-tile span {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(222, 204, 169, 0.42);
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.asset-confirm-tile strong {
+  color: var(--gold-bright);
+  font-family: var(--mono);
+  font-size: 20px;
+  letter-spacing: -0.04em;
+}
+
+.asset-confirm-text {
+  margin: 14px 0 10px;
+  color: rgba(244, 234, 214, 0.7);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.asset-confirm-text strong {
+  color: var(--cream);
+  font-weight: 800;
+}
+
+.asset-confirm-note {
+  color: rgba(222, 204, 169, 0.4);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+}
+
 .asset-mortgaged {
   display: inline-block;
   margin-left: 4px;
@@ -4687,14 +4926,6 @@ button.land-card {
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .asset-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .asset-houses {
-    display: none;
-  }
-
   .win-rank-row {
     grid-template-columns: 16px 20px minmax(0, 1fr) auto;
   }
@@ -5561,6 +5792,238 @@ button.land-card {
     width: min(1200px, 96vw);
     max-height: calc(100dvh - 28px);
     padding: clamp(30px, 3vw, 46px);
+  }
+
+  .assets-card {
+    width: min(1040px, 94vw);
+    max-height: calc(100dvh - 28px);
+    padding: clamp(30px, 3vw, 46px);
+  }
+
+  .assets-summary {
+    margin-bottom: 22px;
+    padding: 18px 22px;
+    gap: 24px;
+  }
+
+  .assets-summary span {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+
+  .assets-summary strong {
+    font-size: 24px;
+  }
+
+  .asset-group-title {
+    margin: 20px 0 9px;
+    font-size: 11.5px;
+    gap: 11px;
+  }
+
+  .asset-group-title i {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+
+  .asset-row {
+    padding: 16px 10px;
+    gap: 18px;
+  }
+
+  .asset-name strong {
+    font-size: 20px;
+  }
+
+  .asset-name span {
+    font-size: 12px;
+  }
+
+  .asset-mortgage-info {
+    font-size: 12.5px;
+    padding: 7px 12px;
+  }
+
+  .asset-mortgaged {
+    font-size: 11.5px;
+    padding: 4px 10px;
+    margin-left: 10px;
+  }
+
+  .asset-houses {
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .asset-house {
+    width: 9px;
+    height: 14px;
+    border-radius: 2px;
+  }
+
+  .asset-house.hotel {
+    width: 19px;
+    height: 14px;
+  }
+
+  .mini-action {
+    min-width: 112px;
+    height: 46px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    border-radius: 9px;
+  }
+
+  .asset-confirm-card {
+    width: min(940px, 94vw);
+    padding: clamp(30px, 3.4vw, 46px);
+  }
+
+  .asset-confirm-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+
+  .asset-confirm-tile {
+    padding: 18px 20px;
+    border-radius: 14px;
+  }
+
+  .asset-confirm-tile span {
+    font-size: 10.5px;
+    margin-bottom: 10px;
+  }
+
+  .asset-confirm-tile strong {
+    font-size: 25px;
+  }
+
+  .asset-confirm-text {
+    margin: 18px 0 14px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .asset-confirm-note {
+    font-size: 12.5px;
+  }
+
+  .assets-card {
+    width: min(1040px, 94vw);
+    max-height: calc(100dvh - 28px);
+    padding: clamp(30px, 3vw, 46px);
+  }
+
+  .assets-summary {
+    margin-bottom: 22px;
+    padding: 18px 22px;
+    gap: 24px;
+  }
+
+  .assets-summary span {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+  }
+
+  .assets-summary strong {
+    font-size: 24px;
+  }
+
+  .asset-group-title {
+    margin: 20px 0 9px;
+    font-size: 11.5px;
+    gap: 11px;
+  }
+
+  .asset-group-title i {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+
+  .asset-row {
+    padding: 16px 10px;
+    gap: 18px;
+  }
+
+  .asset-name strong {
+    font-size: 20px;
+  }
+
+  .asset-name span {
+    font-size: 12px;
+  }
+
+  .asset-mortgage-info {
+    font-size: 12.5px;
+    padding: 7px 12px;
+  }
+
+  .asset-mortgaged {
+    font-size: 11.5px;
+    padding: 4px 10px;
+    margin-left: 10px;
+  }
+
+  .asset-houses {
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .asset-house {
+    width: 9px;
+    height: 14px;
+    border-radius: 2px;
+  }
+
+  .asset-house.hotel {
+    width: 19px;
+    height: 14px;
+  }
+
+  .mini-action {
+    min-width: 112px;
+    height: 46px;
+    padding: 0 14px;
+    font-size: 12.5px;
+    border-radius: 9px;
+  }
+
+  .asset-confirm-card {
+    width: min(940px, 94vw);
+    padding: clamp(30px, 3.4vw, 46px);
+  }
+
+  .asset-confirm-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+
+  .asset-confirm-tile {
+    padding: 18px 20px;
+    border-radius: 14px;
+  }
+
+  .asset-confirm-tile span {
+    font-size: 10.5px;
+    margin-bottom: 10px;
+  }
+
+  .asset-confirm-tile strong {
+    font-size: 25px;
+  }
+
+  .asset-confirm-text {
+    margin: 18px 0 14px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .asset-confirm-note {
+    font-size: 12.5px;
   }
 
   .trade-card .dialog-head {

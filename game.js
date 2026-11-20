@@ -2548,7 +2548,7 @@ function showDeedModal(tile, options) {
     `, {
       cardClass: "deed-modal",
       dismissible: mode === "view",
-      onClose: () => resolve(false),
+      onClose: mode === "view" ? () => resolve(false) : null,
     });
 
     if (mode === "buy") {
@@ -2965,6 +2965,7 @@ function assetsMarkup(player) {
           <div class="asset-name">
             <strong>${esc(tile.name)}${tile.mortgaged ? `<span class="asset-mortgaged">MORTGAGED</span>` : ""}</strong>
             <span>${tile.type === "property" ? `${GROUPS[tile.group].name} set · $${tile.price}` : tile.type === "railroad" ? "Railroad · $200" : "Utility · $150"}${tile.type === "property" ? ` · build ${money(buildCost)}` : ""}</span>
+            ${tile.mortgaged ? `<span class="asset-mortgage-info">Mortgage ${money(mortgageValue(tile))} · lift ${money(unmortgageCost(tile))}</span>` : ""}
           </div>
           <div class="asset-houses">${houses}</div>
           <div class="asset-actions">${actions}</div>
@@ -2977,6 +2978,69 @@ function assetsMarkup(player) {
       ${rows}
     `;
   }).join("");
+}
+
+function showAssetActionConfirm(player, tile, action) {
+  const isMortgage = action === "mortgage";
+  const value = isMortgage ? mortgageValue(tile) : unmortgageCost(tile);
+  const cashAfter = isMortgage ? player.cash + value : player.cash - value;
+
+  return new Promise((resolve) => {
+    const color = tile.type === "property"
+      ? GROUPS[tile.group].color
+      : tile.type === "railroad"
+        ? "#303936"
+        : "#66755d";
+    const light = tile.type === "property" && (tile.group === "lightblue" || tile.group === "yellow");
+    const groupName = tile.type === "property"
+      ? GROUPS[tile.group].name.toUpperCase()
+      : tile.type === "railroad"
+        ? "RAILROAD"
+        : "UTILITY";
+
+    const { overlay, close } = mountOverlay(`
+      <div class="deed-band ${light ? "is-light" : ""}" style="--deed-color:${color}">
+        <small>${groupName}</small>
+        <strong>${esc(tile.name)}</strong>
+      </div>
+      <div class="asset-confirm-body">
+        <div class="asset-confirm-grid">
+          <div class="asset-confirm-tile"><span>DEED PRICE</span><strong>${money(tile.price)}</strong></div>
+          <div class="asset-confirm-tile is-value"><span>${isMortgage ? "MORTGAGE VALUE" : "UNMORTGAGE COST"}</span><strong>${money(value)}</strong></div>
+          <div class="asset-confirm-tile"><span>CASH ON HAND</span><strong>${money(player.cash)}</strong></div>
+          <div class="asset-confirm-tile is-after"><span>CASH AFTER</span><strong>${money(cashAfter)}</strong></div>
+        </div>
+        <p class="asset-confirm-text">${isMortgage
+          ? `Mortgaged deeds collect <strong>no rent</strong>, and no new buildings can be built in the ${esc(groupName.toLowerCase())} set while any deed is mortgaged. Lifting it later costs <strong>${money(unmortgageCost(tile))}</strong> (mortgage plus 10% interest).`
+          : `Paying the bank <strong>${money(value)}</strong> lifts this mortgage. The deed returns to normal rent, and buildings in this set become available again.`}</p>
+        <div class="asset-confirm-note">${isMortgage
+          ? tile.type === "property"
+            ? `Building cost ${money(GROUPS[tile.group].houseCost)} · base rent ${money(tile.rents[0])}`
+            : tile.type === "railroad"
+              ? "Base rent $25 · no buildings"
+              : "Base rent 4× dice · no buildings"
+          : `Mortgage value ${money(mortgageValue(tile))} · 10% interest ${money(Math.ceil(mortgageValue(tile) * 0.1))}`}</div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-dark" type="button" data-asset-cancel>CANCEL</button>
+        <button class="btn btn-gold" type="button" data-asset-confirm data-autofocus>${isMortgage ? "MORTGAGE DEED" : "LIFT MORTGAGE"} · ${money(value)}</button>
+      </div>
+    `, {
+      cardClass: "dialog-card asset-confirm-card",
+      dismissible: true,
+      onClose: () => resolve(false),
+    });
+
+    overlay.querySelector("[data-asset-confirm]").addEventListener("click", () => {
+      playSound("click");
+      resolve(true);
+      close();
+    });
+    overlay.querySelector("[data-asset-cancel]").addEventListener("click", () => {
+      playSound("click");
+      close();
+    });
+  });
 }
 
 function openAssetsModal() {
@@ -3024,7 +3088,7 @@ function openAssetsModal() {
     updateUI();
   };
 
-  bodyRef.addEventListener("click", (event) => {
+  bodyRef.addEventListener("click", async (event) => {
     const buildButton = event.target.closest("[data-asset-build]");
     const sellButton = event.target.closest("[data-asset-sell]");
     const mortgageButton = event.target.closest("[data-asset-mortgage]");
@@ -3034,6 +3098,8 @@ function openAssetsModal() {
       const index = Number(mortgageButton.dataset.assetMortgage);
       const tile = game.board[index];
       if (!canMortgage(player, tile)) return;
+      const ok = await showAssetActionConfirm(player, tile, "mortgage");
+      if (!ok) return;
       const value = mortgageValue(tile);
       tile.mortgaged = true;
       player.cash += value;
@@ -3052,6 +3118,8 @@ function openAssetsModal() {
       const index = Number(unmortgageButton.dataset.assetUnmortgage);
       const tile = game.board[index];
       if (!canUnmortgage(player, tile)) return;
+      const ok = await showAssetActionConfirm(player, tile, "unmortgage");
+      if (!ok) return;
       const value = unmortgageCost(tile);
       tile.mortgaged = false;
       player.cash -= value;
