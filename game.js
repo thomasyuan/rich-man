@@ -1468,7 +1468,6 @@ function renderPortfolioRail() {
           <span class="portfolio-avatar">${player.avatar}</span>
           <div class="portfolio-name">
             <strong>${esc(player.name)}</strong>
-            <span>${money(player.cash)} · ${player.props.length} deed${player.props.length === 1 ? "" : "s"}</span>
           </div>
           ${active ? `<i class="portfolio-live">LIVE</i>` : ""}
         </header>
@@ -1520,20 +1519,21 @@ function renderStatsRail() {
         ? "Bankrupt"
         : player.inJail
           ? "In jail"
-          : `${player.props.length} deed${player.props.length === 1 ? "" : "s"}`;
+          : "";
       return `
         <div class="tycoon-row ${active ? "is-active" : ""} ${player.bankrupt ? "is-bankrupt" : ""}" style="--pcolor:${player.color}">
           <div class="tycoon-main">
             <span class="tycoon-avatar">${player.avatar}</span>
             <div class="tycoon-copy">
               <strong>${esc(player.name)}</strong>
-              <small>${status}</small>
+              ${status ? `<small>${status}</small>` : ""}
             </div>
             <span class="tycoon-cash">${money(player.cash)}</span>
           </div>
           <div class="tycoon-buildings">
-            <span class="building-chip"><i></i><b>${buildings.houses}</b> house${buildings.houses === 1 ? "" : "s"}</span>
-            <span class="building-chip hotel-chip"><i></i><b>${buildings.hotels}</b> hotel${buildings.hotels === 1 ? "" : "s"}</span>
+            <span class="building-chip deed-chip"><b>${player.props.length}</b> deed${player.props.length === 1 ? "" : "s"}</span>
+            <span class="building-chip"><b>${buildings.houses}</b> house${buildings.houses === 1 ? "" : "s"}</span>
+            <span class="building-chip hotel-chip"><b>${buildings.hotels}</b> hotel${buildings.hotels === 1 ? "" : "s"}</span>
           </div>
         </div>
       `;

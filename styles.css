@@ -2533,16 +2533,16 @@ button.land-card {
 .tycoon-buildings {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   margin-top: 9px;
-  padding-left: 43px;
+  padding-left: 36px;
 }
 
 .building-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid rgba(105, 191, 140, 0.24);
   border-radius: 999px;
   background: rgba(72, 148, 106, 0.12);
@@ -2553,23 +2553,16 @@ button.land-card {
   white-space: nowrap;
 }
 
-.building-chip i {
-  width: 8px;
-  height: 9px;
-  border-radius: 1px;
-  background: #5dc08a;
-}
-
 .building-chip.hotel-chip {
   border-color: rgba(215, 113, 99, 0.2);
   background: rgba(184, 74, 63, 0.09);
   color: rgba(240, 163, 151, 0.7);
 }
 
-.building-chip.hotel-chip i {
-  width: 14px;
-  height: 9px;
-  background: #dc7668;
+.deed-chip {
+  border-color: rgba(213, 175, 95, 0.26);
+  background: rgba(213, 175, 95, 0.1);
+  color: rgba(230, 205, 149, 0.82);
 }
 
 .building-chip b {
