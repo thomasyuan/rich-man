@@ -996,7 +996,8 @@ function createGame(definitions, balance) {
       mortgaged: false,
     })),
     active: 0,
-    phase: "roll",
+    phase: "order",
+    diceOff: { totals: {}, candidates: players.map((player) => player.id) },
     startingCash: balance,
     turnDoubles: 0,
     round: 1,
@@ -1020,62 +1021,76 @@ function launchGame(definitions, balance = startingCash) {
   buildTokens();
   setDiceInstant(1, 1);
   renderAll();
-  logEvent("✦", "The board is set. A dice-off decides who moves first.", {
-    sub: `Each tycoon starts with ${money(startingCash)}.`,
-  });
-  runDiceOff();
+  startDiceOff();
 }
 
-async function runDiceOff() {
-  if (!game) return;
-  game.phase = "order";
-  game.note = "Rolling for the lead.";
+function startDiceOff() {
+  const first = game.players[0];
+  game.active = first.id;
+  game.note = `${first.name}, roll for the dice-off.`;
+  updateUI();
+  logEvent("⚄", `The dice-off decides who moves first. <strong>${esc(first.name)}</strong> rolls first.`, {
+    sub: `Each tycoon starts with ${money(game.startingCash)}.`,
+  });
+  showToast("⚄", "Roll for the lead", "Highest total moves first. Ties reroll.", "card", 3000);
+  playSound("turn");
+}
+
+async function handleOrderRoll() {
+  const player = currentPlayer();
+  const off = game.diceOff;
+  game.phase = "rolling";
+  game.note = "";
   updateUI();
 
-  const totals = new Map();
-  for (const player of game.players) {
-    const d1 = rand(1, 6);
-    const d2 = rand(1, 6);
-    await animateDice(d1, d2);
-    game.lastDice = [d1, d2];
-    const total = d1 + d2;
-    totals.set(player.id, total);
-    logEvent("🎲", `<strong>${esc(player.name)}</strong> rolled ${d1} + ${d2} = <strong>${total}</strong> in the dice-off.`, {
-      sub: "The highest total moves first.",
-    });
-    showToast("🎲", `${player.name} rolled ${total}`, "Rolling for the first move.", "card", 1600);
-    await wait(430);
-    if (game.gameOver) return;
+  const d1 = rand(1, 6);
+  const d2 = rand(1, 6);
+  await animateDice(d1, d2);
+  game.lastDice = [d1, d2];
+  const total = d1 + d2;
+  off.totals[player.id] = total;
+
+  logEvent("🎲", `<strong>${esc(player.name)}</strong> rolled ${d1} + ${d2} = <strong>${total}</strong> in the dice-off.`, {
+    sub: "Highest total moves first.",
+  });
+  showToast("🎲", `${player.name} rolled ${total}`, "Rolling for the first move.", "card", 1800);
+  await wait(380);
+  if (game.gameOver) return;
+
+  const remaining = off.candidates.filter((id) => off.totals[id] === undefined);
+  if (remaining.length) {
+    const next = game.players[remaining[0]];
+    game.active = next.id;
+    game.note = `${next.name}, roll for the dice-off.`;
+    game.phase = "order";
+    updateUI();
+    playSound("turn");
+    return;
   }
 
-  let best = Math.max(...totals.values());
-  let winners = game.players.filter((player) => totals.get(player.id) === best);
+  const best = Math.max(...off.candidates.map((id) => off.totals[id]));
+  const tied = off.candidates.filter((id) => off.totals[id] === best);
 
-  while (winners.length > 1) {
-    showToast("⚄", "A tie — reroll", `${winners.map((player) => player.name).join(", ")} are tied at ${best}.`, "card", 2400);
-    logEvent("⚄", `<strong>${winners.map((player) => esc(player.name)).join(", ")}</strong> are tied at ${best}. Rerolling the dice-off.`);
-    const rerollers = [...winners];
-    for (const player of rerollers) {
-      const d1 = rand(1, 6);
-      const d2 = rand(1, 6);
-      await animateDice(d1, d2);
-      game.lastDice = [d1, d2];
-      const total = d1 + d2;
-      totals.set(player.id, total);
-      logEvent("🎲", `<strong>${esc(player.name)}</strong> rerolled ${d1} + ${d2} = <strong>${total}</strong>.`);
-      await wait(430);
-      if (game.gameOver) return;
-    }
-    best = Math.max(...rerollers.map((player) => totals.get(player.id)));
-    winners = rerollers.filter((player) => totals.get(player.id) === best);
+  if (tied.length > 1) {
+    const names = tied.map((id) => game.players[id].name);
+    showToast("⚄", `Tie at ${best}`, `${names.join(", ")} roll again.`, "card", 2600);
+    logEvent("⚄", `<strong>${names.map((name) => esc(name)).join(", ")}</strong> are tied at ${best}. The dice-off rerolls.`);
+    off.candidates = tied;
+    const next = game.players[tied[0]];
+    game.active = next.id;
+    game.note = `${next.name}, roll for the dice-off.`;
+    game.phase = "order";
+    updateUI();
+    playSound("turn");
+    return;
   }
 
-  const first = winners[0];
-  game.active = first.id;
+  const winner = game.players[tied[0]];
+  game.active = winner.id;
   game.phase = "roll";
   game.note = "";
-  logEvent("🏁", `<strong>${esc(first.name)}</strong> won the dice-off and opens the game.`);
-  showToast("🏁", `${first.name} moves first`, "Won the dice-off. Roll the dice to open the game.", "gain", 3200);
+  logEvent("🏁", `<strong>${esc(winner.name)}</strong> won the dice-off and opens the game.`);
+  showToast("🏁", `${winner.name} moves first`, "Won the dice-off. Roll to open the game.", "gain", 3200);
   playSound("turn");
   updateUI();
 }
@@ -1556,7 +1571,7 @@ function renderCenter() {
       : `${player.name.toUpperCase()}'S TURN`;
   els.roundChip.textContent = game.gameOver ? "FINAL" : `ROUND ${game.round}`;
 
-  const disabled = phase !== "roll" || game.gameOver;
+  const disabled = (phase !== "roll" && phase !== "order") || game.gameOver;
   els.rollBtn.disabled = disabled;
   els.tradeBtn.disabled = game.gameOver || phase !== "roll" || game.players.filter((item) => !item.bankrupt && item.id !== player.id).length === 0;
   els.drawerTradeBtn.disabled = els.tradeBtn.disabled;
@@ -1693,7 +1708,12 @@ function changeCash(player, delta, options = {}) {
 }
 
 async function handleRoll() {
-  if (!game || game.gameOver || game.phase !== "roll" || isOverlayOpen()) return;
+  if (!game || game.gameOver || isOverlayOpen()) return;
+  if (game.phase === "order") {
+    await handleOrderRoll();
+    return;
+  }
+  if (game.phase !== "roll") return;
   const player = currentPlayer();
   if (player.bankrupt) return;
   if (player.inJail) {
