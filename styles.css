@@ -2149,21 +2149,8 @@ input:focus-visible {
 .portfolio-player.is-active {
   margin: 0;
   padding: 0;
-  border-radius: 8px;
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--pcolor) 11%, transparent), transparent 82%),
-    rgba(255, 255, 255, 0.015);
-}
-
-.portfolio-player.is-active::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  border: 2px solid color-mix(in srgb, var(--pcolor) 82%, transparent);
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
-  pointer-events: none;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--pcolor) 10%, transparent);
 }
 
 .portfolio-player.is-bankrupt {
@@ -2471,9 +2458,9 @@ button.land-card {
 }
 
 .tycoon-row.is-active {
-  margin: 0 -4px;
-  padding: 7px 4px;
-  border-radius: 5px;
+  margin: 0;
+  padding: 14px 0;
+  border-radius: 6px;
   background: color-mix(in srgb, var(--pcolor) 10%, transparent);
 }
 
