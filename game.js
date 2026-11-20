@@ -726,6 +726,14 @@ async function showRules() {
         <div><strong>BUILDING</strong><p>Own a full color set to build houses and hotels. Manage them from your turn panel.</p></div>
       </div>
       <div class="rule-item">
+        <div class="rule-icon">⇄</div>
+        <div><strong>TRADING &amp; AUCTIONS</strong><p>Trade cash, deeds, and jail cards before rolling. Decline a purchase and it goes to auction.</p></div>
+      </div>
+      <div class="rule-item">
+        <div class="rule-icon">🏦</div>
+        <div><strong>MORTGAGES</strong><p>Mortgage unimproved property for half its value. Pay 10% interest to lift it.</p></div>
+      </div>
+      <div class="rule-item">
         <div class="rule-icon">⛓</div>
         <div><strong>JAIL</strong><p>Roll doubles, pay $50, or use a jail card. After three failed rolls, the fee is automatic.</p></div>
       </div>
@@ -956,6 +964,7 @@ function createGame(definitions, balance) {
       rents: tile.rents ? [...tile.rents] : undefined,
       owner: null,
       houses: 0,
+      mortgaged: false,
     })),
     active: 0,
     phase: "roll",
@@ -1187,6 +1196,7 @@ function renderBoard() {
 
     const owner = tile.owner !== null ? game.players[tile.owner] : null;
     element.classList.toggle("is-owned", Boolean(owner));
+    element.classList.toggle("is-mortgaged", Boolean(tile.mortgaged));
     element.classList.toggle("is-active", !game.gameOver && activePlayer && activePlayer.position === index);
     element.style.setProperty("--owner-color", owner ? owner.color : "transparent");
 
@@ -1468,6 +1478,8 @@ function renderCenter() {
 
   const disabled = phase !== "roll" || game.gameOver;
   els.rollBtn.disabled = disabled;
+  els.tradeBtn.disabled = game.gameOver || phase !== "roll" || game.players.filter((item) => !item.bankrupt && item.id !== player.id).length === 0;
+  els.drawerTradeBtn.disabled = els.tradeBtn.disabled;
 
   if (game.gameOver) {
     els.rollBtnLabel.textContent = "GAME OVER";
@@ -1923,6 +1935,13 @@ async function resolveProperty(player, tile, diceTotal, rentMultiplier, utilityT
     return;
   }
 
+  if (tile.mortgaged) {
+    showToast("🏦", "Mortgaged property", `${tile.name} is mortgaged — no rent is due.`, "card", 2600);
+    logEvent("🏦", `<strong>${esc(tile.name)}</strong> is mortgaged. No rent was collected.`);
+    await wait(650);
+    return;
+  }
+
   const rent = calculateRent(tile, owner, diceTotal, { rentMultiplier, utilityTenfold });
   const paid = await showDeedModal(tile, {
     mode: "rent",
@@ -1959,7 +1978,10 @@ async function offerPurchase(player, tile) {
   });
 
   if (!buy) {
-    logEvent("↷", `<strong>${esc(player.name)}</strong> passed on ${tile.name}.`);
+    logEvent("↷", `<strong>${esc(player.name)}</strong> passed on ${tile.name}.`, {
+      sub: "The deed goes to auction.",
+    });
+    await runAuction(tile, player);
     return;
   }
 
@@ -2214,6 +2236,28 @@ function calculateRent(tile, owner, diceTotal, options = {}) {
   return Math.round(rent * rentMultiplier);
 }
 
+function mortgageValue(tile) {
+  return Math.ceil((tile.price || 0) / 2);
+}
+
+function unmortgageCost(tile) {
+  return Math.ceil(mortgageValue(tile) * 1.1);
+}
+
+function groupHasBuildings(tile) {
+  return tile.type === "property" && game.board.some((item) =>
+    item.type === "property" && item.group === tile.group && item.houses > 0
+  );
+}
+
+function canMortgage(player, tile) {
+  return Boolean(tile && tile.owner === player.id && !tile.mortgaged && !groupHasBuildings(tile));
+}
+
+function canUnmortgage(player, tile) {
+  return Boolean(tile && tile.owner === player.id && tile.mortgaged && player.cash >= unmortgageCost(tile));
+}
+
 function countBuildings(player) {
   let houses = 0;
   let hotels = 0;
@@ -2326,7 +2370,7 @@ function showDeedModal(tile, options) {
         <button class="btn btn-primary" type="button" data-buy data-autofocus ${player.cash < tile.price ? "disabled" : ""}>
           BUY FOR ${money(tile.price)}
         </button>
-        <button class="btn btn-ghost" type="button" data-pass>PASS</button>
+        <button class="btn btn-ghost" type="button" data-pass>PASS · AUCTION</button>
       `;
       balanceHtml = `<div class="balance-preview">AFTER PURCHASE <b>${money(player.cash - tile.price)}</b> · CASH ON HAND <b>${money(player.cash)}</b></div>`;
     } else if (mode === "rent") {
@@ -2492,6 +2536,7 @@ function markBankrupt(player, creditor) {
       if (!creditor.props.includes(index)) creditor.props.push(index);
     } else {
       tile.owner = null;
+      tile.mortgaged = false;
     }
   });
   player.props = [];
@@ -2659,8 +2704,10 @@ async function animateDice(d1, d2) {
 function canBuild(player, tile) {
   if (!tile || tile.type !== "property" || tile.houses >= MAX_HOUSES) return false;
   if (!ownsGroup(player, tile.group)) return false;
+  if (tile.mortgaged) return false;
   if (player.cash < GROUPS[tile.group].houseCost) return false;
   const groupTiles = game.board.filter((item) => item.type === "property" && item.group === tile.group);
+  if (groupTiles.some((item) => item.mortgaged)) return false;
   const minimum = Math.min(...groupTiles.map((item) => item.houses));
   return tile.houses === minimum;
 }
@@ -2678,7 +2725,10 @@ function netWorth(player) {
     const buildValue = tile.type === "property"
       ? tile.houses * GROUPS[tile.group].houseCost
       : 0;
-    return total + (tile.price || 0) + buildValue;
+    const landValue = tile.mortgaged
+      ? Math.max(0, (tile.price || 0) - mortgageValue(tile))
+      : tile.price || 0;
+    return total + landValue + buildValue;
   }, 0);
 }
 
@@ -2715,17 +2765,23 @@ function assetsMarkup(player) {
           : `<span>${Array.from({ length: tile.houses }, () => `<i class="asset-house"></i>`).join("")}</span><span>${tile.houses === 0 ? "NO HOUSES" : `${tile.houses} HOUSE${tile.houses === 1 ? "" : "S"}`}</span>`
         : `<span>${tile.type === "railroad" ? "TRANSIT" : "UTILITY"}</span>`;
 
-      const actions = tile.type === "property"
-        ? `
+      const mortgageButton = tile.mortgaged
+        ? `<button class="mini-action" type="button" data-asset-unmortgage="${index}" ${canUnmortgage(player, tile) ? "" : "disabled"} title="Pay off the mortgage">UNMORTGAGE ${money(unmortgageCost(tile))}</button>`
+        : `<button class="mini-action" type="button" data-asset-mortgage="${index}" ${canMortgage(player, tile) ? "" : "disabled"} title="${groupHasBuildings(tile) ? "Sell all buildings in this color set first" : "Mortgage this property"}">MORTGAGE ${money(mortgageValue(tile))}</button>`;
+
+      let actions = mortgageButton;
+      if (tile.type === "property" && !tile.mortgaged) {
+        actions = `
           <button class="mini-action" type="button" data-asset-build="${index}" ${canBuild(player, tile) ? "" : "disabled"}>+ HOUSE</button>
           <button class="mini-action" type="button" data-asset-sell="${index}" ${canSell(player, tile) ? "" : "disabled"}>SELL ${money(sellValue)}</button>
-        `
-        : "";
+          ${mortgageButton}
+        `;
+      }
 
       return `
-        <div class="asset-row">
+        <div class="asset-row ${tile.mortgaged ? "is-mortgaged" : ""}">
           <div class="asset-name">
-            <strong>${esc(tile.name)}</strong>
+            <strong>${esc(tile.name)}${tile.mortgaged ? `<span class="asset-mortgaged">MORTGAGED</span>` : ""}</strong>
             <span>${tile.type === "property" ? `${GROUPS[tile.group].name} set · $${tile.price}` : tile.type === "railroad" ? "Railroad · $200" : "Utility · $150"}${tile.type === "property" ? ` · build ${money(buildCost)}` : ""}</span>
           </div>
           <div class="asset-houses">${houses}</div>
@@ -2766,7 +2822,7 @@ function openAssetsModal() {
       <div>
         <div class="dialog-kicker">BUILDING DESK · ${esc(player.name.toUpperCase())}</div>
         <h2>Your empire</h2>
-        <p class="dialog-sub">Build evenly across a complete color set. Sell a house back for half its price.</p>
+        <p class="dialog-sub">Build evenly across a complete color set, sell houses for half price, or mortgage unimproved property for cash.</p>
       </div>
       <button class="close-x" type="button" data-close aria-label="Close">×</button>
     </div>
@@ -2789,6 +2845,44 @@ function openAssetsModal() {
   bodyRef.addEventListener("click", (event) => {
     const buildButton = event.target.closest("[data-asset-build]");
     const sellButton = event.target.closest("[data-asset-sell]");
+    const mortgageButton = event.target.closest("[data-asset-mortgage]");
+    const unmortgageButton = event.target.closest("[data-asset-unmortgage]");
+
+    if (mortgageButton) {
+      const index = Number(mortgageButton.dataset.assetMortgage);
+      const tile = game.board[index];
+      if (!canMortgage(player, tile)) return;
+      const value = mortgageValue(tile);
+      tile.mortgaged = true;
+      player.cash += value;
+      playSound("cash");
+      logEvent("🏦", `<strong>${esc(player.name)}</strong> mortgaged <strong>${tile.name}</strong>.`, {
+        sub: `Received ${money(value)}. No rent is collected while mortgaged.`,
+      });
+      showToast("🏦", "Property mortgaged", `${tile.name} raised ${money(value)}.`, "loss", 2600);
+      showFloat(player, `+${money(value)}`, "gain");
+      renderAll();
+      refresh();
+      return;
+    }
+
+    if (unmortgageButton) {
+      const index = Number(unmortgageButton.dataset.assetUnmortgage);
+      const tile = game.board[index];
+      if (!canUnmortgage(player, tile)) return;
+      const value = unmortgageCost(tile);
+      tile.mortgaged = false;
+      player.cash -= value;
+      playSound("buy");
+      logEvent("🏦", `<strong>${esc(player.name)}</strong> lifted the mortgage on <strong>${tile.name}</strong>.`, {
+        sub: `Paid ${money(value)} including interest.`,
+      });
+      showToast("🏦", "Mortgage lifted", `${tile.name} can collect rent again.`, "gain", 2600);
+      showFloat(player, `-${money(value)}`, "loss");
+      renderAll();
+      refresh();
+      return;
+    }
 
     if (buildButton) {
       const index = Number(buildButton.dataset.assetBuild);
@@ -2828,6 +2922,488 @@ function openAssetsModal() {
       playSound("click");
       close();
     });
+  });
+}
+
+function tradeAssetColor(tile) {
+  return tile.type === "property"
+    ? GROUPS[tile.group].color
+    : tile.type === "railroad"
+      ? "#59625a"
+      : "#6f8063";
+}
+
+function tradeAssetSub(tile) {
+  const bits = [];
+  if (tile.type === "property") {
+    bits.push(GROUPS[tile.group].name);
+    if (tile.houses === 5) bits.push("Hotel");
+    else if (tile.houses > 0) bits.push(`${tile.houses} house${tile.houses === 1 ? "" : "s"}`);
+  } else if (tile.type === "railroad") {
+    bits.push("Railroad");
+  } else {
+    bits.push("Utility");
+  }
+  if (tile.mortgaged) bits.push("Mortgaged");
+  bits.push(money(tile.price));
+  return bits.join(" · ");
+}
+
+function tradeAssetRow(tile, index, side) {
+  const disabled = tile.type === "property" && groupHasBuildings(tile);
+  const note = disabled ? "Sell all buildings in this set first" : tradeAssetSub(tile);
+  return `
+    <label class="trade-asset ${disabled ? "is-disabled" : ""}">
+      <input type="checkbox" data-trade-prop="${index}" data-trade-side="${side}" ${disabled ? "disabled" : ""} />
+      <span class="trade-asset-color" style="--asset-color:${tradeAssetColor(tile)}"></span>
+      <span class="trade-asset-copy">
+        <strong>${esc(tile.short)}</strong>
+        <small>${note}</small>
+      </span>
+      <span class="trade-asset-value">${money(tile.price)}</span>
+    </label>
+  `;
+}
+
+function tradeSideMarkup(player, side, label) {
+  const properties = [...player.props].sort((a, b) => a - b);
+  const hasAssets = properties.length || player.getOut > 0;
+  return `
+    <section class="trade-side">
+      <div class="trade-side-head" style="--side-color:${player.color}">
+        <span class="trade-side-avatar">${player.avatar}</span>
+        <div class="trade-side-copy">
+          <strong>${esc(player.name)}</strong>
+          <span>${money(player.cash)} cash · ${player.props.length} deeds</span>
+        </div>
+        <span class="trade-side-label">${label}</span>
+      </div>
+      <label class="trade-cash-row">
+        <span>CASH OFFER</span>
+        <span class="trade-cash-input">
+          <span>$</span>
+          <input type="number" min="0" max="${player.cash}" step="10" value="0" data-trade-cash="${side}" />
+        </span>
+      </label>
+      <div class="trade-assets-scroll">
+        ${hasAssets ? [
+          ...properties.map((index) => tradeAssetRow(game.board[index], index, side)),
+          player.getOut > 0 ? `
+            <label class="trade-asset jail-asset">
+              <input type="checkbox" data-trade-jail="${side}" />
+              <span class="trade-asset-color"></span>
+              <span class="trade-asset-copy">
+                <strong>Get Out of Jail Free</strong>
+                <small>${player.getOut} available · tradable key</small>
+              </span>
+              <span class="trade-asset-value">KEY</span>
+            </label>
+          ` : "",
+        ].join("") : `<div class="trade-empty">No deeds to trade</div>`}
+      </div>
+    </section>
+  `;
+}
+
+function openTradeModal() {
+  if (!game || game.gameOver || game.phase !== "roll" || isOverlayOpen()) return;
+  const initiator = currentPlayer();
+  const partners = game.players.filter((player) => !player.bankrupt && player.id !== initiator.id);
+  if (!partners.length) {
+    showToast("⇄", "No trade partners", "There is no one left to bargain with.", "", 2200);
+    return;
+  }
+
+  let partner = partners[0];
+  let proposing = false;
+
+  const { overlay, close } = mountOverlay(`
+    <div class="dialog-head">
+      <div>
+        <div class="dialog-kicker">THE NEGOTIATION TABLE</div>
+        <h2>Strike a deal</h2>
+        <p class="dialog-sub">Select cash, deeds, and jail cards from both sides. Improved properties must be cleared first.</p>
+      </div>
+      <button class="close-x" type="button" data-trade-cancel aria-label="Close">×</button>
+    </div>
+    <div class="trade-partners" data-trade-partners>
+      ${partners.map((player) => `
+        <button class="trade-partner ${player.id === partner.id ? "is-selected" : ""}" type="button" data-trade-partner="${player.id}" style="--pcolor:${player.color}">
+          <span class="trade-partner-avatar">${player.avatar}</span>
+          <span>${esc(player.name)}</span>
+          <span class="trade-partner-cash">${money(player.cash)}</span>
+        </button>
+      `).join("")}
+    </div>
+    <div class="trade-body" data-trade-body></div>
+    <div class="dialog-actions">
+      <button class="btn btn-dark" type="button" data-trade-cancel>CANCEL</button>
+      <button class="btn btn-gold" type="button" data-trade-propose>PROPOSE TRADE</button>
+    </div>
+  `, {
+    cardClass: "dialog-card trade-card",
+    dismissible: true,
+  });
+
+  const body = overlay.querySelector("[data-trade-body]");
+
+  const renderBuilder = () => {
+    body.innerHTML = `
+      <div class="trade-columns">
+        ${tradeSideMarkup(initiator, "give", "YOU GIVE")}
+        <div class="trade-vs">⇄</div>
+        ${tradeSideMarkup(partner, "take", "YOU RECEIVE")}
+      </div>
+    `;
+  };
+
+  renderBuilder();
+
+  overlay.addEventListener("click", async (event) => {
+    const partnerButton = event.target.closest("[data-trade-partner]");
+    if (partnerButton) {
+      partner = game.players[Number(partnerButton.dataset.tradePartner)];
+      overlay.querySelectorAll("[data-trade-partner]").forEach((button) => {
+        button.classList.toggle("is-selected", Number(button.dataset.tradePartner) === partner.id);
+      });
+      renderBuilder();
+      return;
+    }
+
+    if (event.target.closest("[data-trade-cancel]")) {
+      playSound("click");
+      close();
+      return;
+    }
+
+    const proposeButton = event.target.closest("[data-trade-propose]");
+    if (!proposeButton || proposing) return;
+    proposing = true;
+
+    const giveProps = [...overlay.querySelectorAll('[data-trade-prop][data-trade-side="give"]:checked')].map((input) => Number(input.dataset.tradeProp));
+    const takeProps = [...overlay.querySelectorAll('[data-trade-prop][data-trade-side="take"]:checked')].map((input) => Number(input.dataset.tradeProp));
+    const giveCash = Math.max(0, Math.floor(Number(overlay.querySelector('[data-trade-cash="give"]').value) || 0));
+    const takeCash = Math.max(0, Math.floor(Number(overlay.querySelector('[data-trade-cash="take"]').value) || 0));
+    const giveJail = Boolean(overlay.querySelector('[data-trade-jail="give"]:checked'));
+    const takeJail = Boolean(overlay.querySelector('[data-trade-jail="take"]:checked'));
+
+    if (giveCash > initiator.cash || takeCash > partner.cash) {
+      proposing = false;
+      showToast("⇄", "Cash unavailable", "One side does not have that much cash.", "loss", 2400);
+      return;
+    }
+
+    if (!giveProps.length && !takeProps.length && !giveCash && !takeCash && !giveJail && !takeJail) {
+      proposing = false;
+      showToast("⇄", "An empty offer", "Put something on the table first.", "", 2200);
+      return;
+    }
+
+    const offer = {
+      fromId: initiator.id,
+      toId: partner.id,
+      giveProps,
+      takeProps,
+      giveCash,
+      takeCash,
+      giveJail,
+      takeJail,
+    };
+
+    close();
+    await wait(120);
+    const accepted = await showTradeOffer(offer);
+    if (accepted) {
+      executeTrade(offer);
+    } else {
+      playSound("card");
+      showToast("⇄", "Offer declined", `${partner.name} passed on the deal.`, "loss", 2400);
+      logEvent("⇄", `<strong>${esc(partner.name)}</strong> declined a trade from <strong>${esc(initiator.name)}</strong>.`);
+    }
+  });
+}
+
+function tradeItemMarkup(properties, cash, jail) {
+  const items = [];
+  properties.forEach((index) => {
+    const tile = game.board[index];
+    items.push(`<div class="trade-offer-item"><i style="--asset-color:${tradeAssetColor(tile)}"></i>${esc(tile.short)}${tile.mortgaged ? " · mortgaged" : ""}<strong>${money(tile.price)}</strong></div>`);
+  });
+  if (cash > 0) {
+    items.push(`<div class="trade-offer-item"><i style="--asset-color:var(--gold)"></i>Cash<strong>${money(cash)}</strong></div>`);
+  }
+  if (jail) {
+    items.push(`<div class="trade-offer-item"><i style="--asset-color:var(--gold)"></i>Get Out of Jail Free<strong>KEY</strong></div>`);
+  }
+  return items.length ? items.join("") : `<div class="trade-offer-none">Nothing</div>`;
+}
+
+function showTradeOffer(offer) {
+  return new Promise((resolve) => {
+    const from = game.players[offer.fromId];
+    const to = game.players[offer.toId];
+    let accepted = false;
+
+    const { overlay, close } = mountOverlay(`
+      <div class="dialog-head">
+        <div>
+          <div class="dialog-kicker">A FORMAL OFFER</div>
+          <h2>${esc(to.name)}, a deal?</h2>
+          <p class="dialog-sub">${esc(from.name)} has put the following terms on the table.</p>
+        </div>
+      </div>
+      <div class="trade-offer-grid">
+        <div class="trade-offer-side">
+          <span>${esc(from.name).toUpperCase()} GIVES</span>
+          ${tradeItemMarkup(offer.giveProps, offer.giveCash, offer.giveJail)}
+        </div>
+        <div class="trade-offer-side">
+          <span>${esc(to.name).toUpperCase()} GIVES</span>
+          ${tradeItemMarkup(offer.takeProps, offer.takeCash, offer.takeJail)}
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-dark" type="button" data-trade-decline>DECLINE</button>
+        <button class="btn btn-gold" type="button" data-trade-accept data-autofocus>ACCEPT DEAL</button>
+      </div>
+    `, {
+      cardClass: "dialog-card trade-offer-card",
+      dismissible: true,
+      onClose: () => resolve(accepted),
+    });
+
+    overlay.querySelector("[data-trade-accept]").addEventListener("click", () => {
+      accepted = true;
+      playSound("click");
+      close();
+    });
+    overlay.querySelector("[data-trade-decline]").addEventListener("click", () => {
+      playSound("click");
+      close();
+    });
+  });
+}
+
+function transferProperty(index, from, to) {
+  const tile = game.board[index];
+  if (!tile || tile.owner !== from.id) return false;
+  from.props = from.props.filter((item) => item !== index);
+  if (!to.props.includes(index)) to.props.push(index);
+  tile.owner = to.id;
+  return true;
+}
+
+function executeTrade(offer) {
+  if (!game || game.gameOver) return false;
+  const from = game.players[offer.fromId];
+  const to = game.players[offer.toId];
+  if (from.cash < offer.giveCash || to.cash < offer.takeCash) return false;
+  if (offer.giveJail && from.getOut < 1) return false;
+  if (offer.takeJail && to.getOut < 1) return false;
+
+  offer.giveProps.forEach((index) => transferProperty(index, from, to));
+  offer.takeProps.forEach((index) => transferProperty(index, to, from));
+
+  from.cash += offer.takeCash - offer.giveCash;
+  to.cash += offer.giveCash - offer.takeCash;
+
+  if (offer.giveJail) {
+    from.getOut -= 1;
+    to.getOut += 1;
+  }
+  if (offer.takeJail) {
+    to.getOut -= 1;
+    from.getOut += 1;
+  }
+
+  updateUI();
+  playSound("buy");
+  burstConfetti(window.innerWidth / 2, window.innerHeight * 0.33, 30, [from.color, to.color, "#f3d88d"]);
+  showToast("🤝", "Deal closed", `${from.name} and ${to.name} shook hands.`, "gain", 3200);
+  logEvent("🤝", `<strong>${esc(from.name)}</strong> and <strong>${esc(to.name)}</strong> completed a trade.`, {
+    sub: `Cash, deeds, and keys changed hands.`,
+  });
+  return true;
+}
+
+function runAuction(tile, initiator) {
+  return new Promise((resolve) => {
+    if (!game || game.gameOver) {
+      resolve(null);
+      return;
+    }
+
+    const players = game.players.filter((player) => !player.bankrupt);
+    if (!players.length) {
+      resolve(null);
+      return;
+    }
+
+    let currentIndex = Math.max(0, players.findIndex((player) => player.id === initiator.id));
+    const passed = new Set();
+    let highestBid = 0;
+    let highestBidder = null;
+    let finished = false;
+
+    logEvent("⚖️", `<strong>${esc(tile.name)}</strong> goes to auction.`, {
+      sub: `Opened after ${initiator.name} declined the purchase.`,
+    });
+
+    const { overlay, close } = mountOverlay(`<div data-auction-body></div>`, {
+      cardClass: "dialog-card auction-card",
+      dismissible: false,
+    });
+
+    const body = overlay.querySelector("[data-auction-body]");
+
+    const nextActiveIndex = (fromIndex) => {
+      for (let step = 1; step <= players.length; step += 1) {
+        const index = (fromIndex + step) % players.length;
+        if (!passed.has(players[index].id)) return index;
+      }
+      return -1;
+    };
+
+    const finishAuction = () => {
+      if (finished) return;
+      finished = true;
+      close();
+      setTimeout(() => resolve({ winner: highestBidder, amount: highestBid }), 100);
+    };
+
+    const checkAuctionEnd = () => {
+      const active = players.filter((player) => !passed.has(player.id));
+      if (!active.length) {
+        finishAuction();
+        return true;
+      }
+      if (active.length === 1 && highestBidder && active[0].id === highestBidder.id) {
+        finishAuction();
+        return true;
+      }
+      return false;
+    };
+
+    const renderAuction = () => {
+      const current = players[currentIndex];
+      const minimum = highestBid > 0 ? highestBid + 10 : 10;
+      const canBid = current.cash >= minimum;
+      const color = tile.type === "property" ? GROUPS[tile.group].color : tile.type === "railroad" ? "#59625a" : "#6f8063";
+      const kind = tile.type === "property" ? GROUPS[tile.group].name.toUpperCase() : tile.type === "railroad" ? "RAILROAD" : "UTILITY";
+      const lightHeader = tile.type === "property" && (tile.group === "lightblue" || tile.group === "yellow");
+
+      body.innerHTML = `
+        <div class="auction-head ${lightHeader ? "is-light" : ""}" style="--auction-color:${color}">
+          <small>AUCTION · ${kind}</small>
+          <h2>${esc(tile.name)}</h2>
+          <span>List price ${money(tile.price)}</span>
+        </div>
+        <div class="auction-highest">
+          <div>
+            <span>HIGHEST BID</span>
+            <strong>${highestBid ? money(highestBid) : "—"}</strong>
+          </div>
+          <small>${highestBidder ? `Leading: ${esc(highestBidder.name)}` : "Waiting for the first bid"}</small>
+        </div>
+        <div class="auction-players">
+          ${players.map((player) => {
+            const isPassed = passed.has(player.id);
+            const isCurrent = player.id === current.id && !isPassed;
+            const isLeader = highestBidder && player.id === highestBidder.id;
+            return `
+              <div class="auction-player ${isCurrent ? "is-current" : ""} ${isPassed && !isLeader ? "is-passed" : ""}" style="--pcolor:${player.color}">
+                <span class="auction-player-avatar">${player.avatar}</span>
+                <span class="auction-player-copy">
+                  <strong>${esc(player.name)}</strong>
+                  <small>${money(player.cash)} available</small>
+                </span>
+                <span class="auction-player-status">${isLeader ? "LEADING" : isPassed ? "PASSED" : isCurrent ? "TO BID" : "IN"}</span>
+              </div>
+            `;
+          }).join("")}
+        </div>
+        <div class="auction-controls">
+          <div class="auction-turnline">
+            <strong>${esc(current.name)}</strong>
+            <small>${canBid ? `Minimum bid ${money(minimum)}` : "Not enough cash to raise"}</small>
+          </div>
+          <div class="auction-bid-row">
+            <label class="auction-bid-input">
+              <span>$</span>
+              <input id="auctionBidInput" type="number" min="${minimum}" max="${current.cash}" step="10" value="${Math.min(current.cash, minimum)}" ${canBid ? "" : "disabled"} />
+            </label>
+            <button class="auction-bid-btn" type="button" data-auction-bid ${canBid ? "" : "disabled"}>BID</button>
+            <button class="auction-pass-btn" type="button" data-auction-pass>PASS</button>
+          </div>
+          <div class="auction-quick">
+            ${[10, 50, 100].map((increment) => `<button type="button" data-auction-inc="${increment}" ${canBid ? "" : "disabled"}>+$${increment}</button>`).join("")}
+          </div>
+          <p class="auction-note">Only whole-dollar bids. A player with the highest bid cannot withdraw it.</p>
+        </div>
+      `;
+    };
+
+    overlay.addEventListener("click", (event) => {
+      if (finished) return;
+
+      const incrementButton = event.target.closest("[data-auction-inc]");
+      if (incrementButton) {
+        const input = overlay.querySelector("#auctionBidInput");
+        if (!input) return;
+        const current = players[currentIndex];
+        const increment = Number(incrementButton.dataset.auctionInc);
+        input.value = Math.min(current.cash, Math.max(Number(input.min), Math.floor(Number(input.value) || 0) + increment));
+        return;
+      }
+
+      if (event.target.closest("[data-auction-pass]")) {
+        const current = players[currentIndex];
+        passed.add(current.id);
+        playSound("click");
+        if (checkAuctionEnd()) return;
+        currentIndex = nextActiveIndex(currentIndex);
+        renderAuction();
+        return;
+      }
+
+      if (event.target.closest("[data-auction-bid]")) {
+        const current = players[currentIndex];
+        const input = overlay.querySelector("#auctionBidInput");
+        const minimum = highestBid > 0 ? highestBid + 10 : 10;
+        const amount = Math.floor(Number(input?.value) || 0);
+        if (amount < minimum || amount > current.cash) {
+          showToast("⚖️", "Bid not accepted", `Bid at least ${money(minimum)} and no more than your cash.`, "loss", 2400);
+          return;
+        }
+        highestBid = amount;
+        highestBidder = current;
+        playSound("cash");
+        if (checkAuctionEnd()) return;
+        currentIndex = nextActiveIndex(currentIndex);
+        renderAuction();
+      }
+    });
+
+    renderAuction();
+  }).then((result) => {
+    if (!game || game.gameOver) return result;
+    if (!result || !result.winner) {
+      showToast("⚖️", "Auction closed", `${tile.name} found no bidders.`, "", 2600);
+      logEvent("⚖️", `<strong>${esc(tile.name)}</strong> received no bids.`);
+      return null;
+    }
+    const { winner, amount } = result;
+    winner.cash -= amount;
+    tile.owner = winner.id;
+    if (!winner.props.includes(game.board.indexOf(tile))) winner.props.push(game.board.indexOf(tile));
+    updateUI();
+    playSound("buy");
+    burstConfetti(window.innerWidth / 2, window.innerHeight * 0.33, 38, [winner.color, "#f3d88d", "#fff4d8"]);
+    showToast("⚖️", "Auction won", `${winner.name} claimed ${tile.name} for ${money(amount)}.`, "gain", 3300);
+    logEvent("⚖️", `<strong>${esc(winner.name)}</strong> won the auction for <strong>${esc(tile.name)}</strong>.`, {
+      sub: `Winning bid ${money(amount)}.`,
+    });
+    return result;
   });
 }
 
@@ -3026,11 +3602,11 @@ function cacheElements() {
     "setupScreen", "setupPlayers", "countPicker", "startBtn", "setupRulesBtn",
     "setupBalance", "heroStartingCash", "startingCashInput", "startCashPresets",
     "gameScreen", "board", "boardCenter", "tokensLayer", "playersList",
-    "eventFeed", "roundChip", "assetsBtn", "soundBtn", "rulesBtn", "newGameBtn",
+    "eventFeed", "roundChip", "assetsBtn", "drawerTradeBtn", "soundBtn", "rulesBtn", "newGameBtn",
     "sideRulesBtn", "miniScoreboard", "tableBtn", "sidePanel", "sidePanelClose",
     "drawerBackdrop", "portfolioMeta", "portfolioList", "statsRound", "statsPanel",
     "turnAvatar", "turnName", "turnCash", "turnPropCount", "turnAssetsBtn",
-    "turnEyebrow", "turnConsole", "rollBtn", "rollBtnLabel", "jailActions",
+    "tradeBtn", "turnEyebrow", "turnConsole", "rollBtn", "rollBtnLabel", "jailActions",
     "payJailBtn", "useJailCardBtn", "turnHint", "diceZone", "die1", "die2",
     "chanceDeck", "chestDeck", "overlayRoot", "toastStack", "fxCanvas",
   ];
@@ -3155,10 +3731,23 @@ function bindEvents() {
     openAssetsModal();
   });
 
+  els.drawerTradeBtn.addEventListener("click", () => {
+    ensureAudio();
+    playSound("click");
+    closeSidePanel();
+    openTradeModal();
+  });
+
   els.turnAssetsBtn.addEventListener("click", () => {
     ensureAudio();
     playSound("click");
     openAssetsModal();
+  });
+
+  els.tradeBtn.addEventListener("click", () => {
+    ensureAudio();
+    playSound("click");
+    openTradeModal();
   });
 
   els.tableBtn.addEventListener("click", () => {

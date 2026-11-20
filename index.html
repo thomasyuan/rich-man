@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#07150f" />
   <title>Monopoly · Skyline Edition</title>
-  <link rel="stylesheet" href="styles.css?v=7" />
+  <link rel="stylesheet" href="styles.css?v=8" />
 </head>
 <body>
   <div class="ambient" aria-hidden="true">
@@ -218,6 +218,10 @@
                   <small>Press SPACE</small>
                 </button>
 
+                <div class="console-tools">
+                  <button class="console-tool" id="tradeBtn" type="button">⇄ TRADE</button>
+                </div>
+
                 <div class="jail-actions" id="jailActions">
                   <button type="button" id="payJailBtn">Pay $50</button>
                   <button type="button" id="useJailCardBtn">Use jail card</button>
@@ -259,7 +263,10 @@
         <section class="activity-panel">
           <div class="activity-head">
             <span>ACTIVITY</span>
-            <button type="button" class="text-btn" id="assetsBtn">MANAGE ASSETS</button>
+            <div class="activity-head-actions">
+              <button type="button" class="text-btn" id="drawerTradeBtn">TRADE</button>
+              <button type="button" class="text-btn" id="assetsBtn">MANAGE ASSETS</button>
+            </div>
           </div>
           <div class="event-feed" id="eventFeed"></div>
         </section>
@@ -279,6 +286,6 @@
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
-  <script src="game.js?v=7" defer></script>
+  <script src="game.js?v=8" defer></script>
 </body>
 </html>
