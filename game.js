@@ -1,6 +1,6 @@
 "use strict";
 
-const START_CASH = 3000;
+const DEFAULT_START_CASH = 3000;
 const GO_SALARY = 200;
 const JAIL_FEE = 50;
 const MAX_HOUSES = 5;
@@ -337,6 +337,7 @@ const CHEST_CARDS = [
 const $ = (selector) => document.querySelector(selector);
 
 let setupCount = 2;
+let startingCash = DEFAULT_START_CASH;
 const setupPlayers = [
   { name: "Player 1", avatar: "🦊", color: PLAYER_COLORS[0] },
   { name: "Player 2", avatar: "🐼", color: PLAYER_COLORS[1] },
@@ -348,6 +349,7 @@ let game = null;
 let tileEls = [];
 let soundOn = true;
 let audioCtx = null;
+let masterGain = null;
 let openOverlayCount = 0;
 let activeOverlay = null;
 let winShown = false;
@@ -408,8 +410,47 @@ function currentPlayer() {
   return game ? game.players[game.active] : null;
 }
 
+function clampStartingCash(value) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return DEFAULT_START_CASH;
+  return Math.min(100000, Math.max(100, Math.round(parsed)));
+}
+
+function normalizeStartingCash(value = startingCash, sync = true) {
+  startingCash = clampStartingCash(value);
+  if (sync) updateSetupCashUI();
+  return startingCash;
+}
+
+function rulesStartingCash() {
+  return game?.startingCash ?? startingCash;
+}
+
+function updateSetupCashUI(syncInput = true) {
+  const formatted = money(startingCash);
+  if (els.setupBalance) els.setupBalance.textContent = formatted;
+  if (els.heroStartingCash) els.heroStartingCash.textContent = formatted;
+  if (syncInput && els.startingCashInput && document.activeElement !== els.startingCashInput) {
+    els.startingCashInput.value = String(startingCash);
+  }
+  if (els.startCashPresets) {
+    els.startCashPresets.querySelectorAll("[data-start-cash]").forEach((button) => {
+      button.classList.toggle("is-selected", Number(button.dataset.startCash) === startingCash);
+    });
+  }
+  if (els.setupPlayers) {
+    els.setupPlayers.querySelectorAll(".player-seat strong").forEach((label) => {
+      label.textContent = formatted;
+    });
+  }
+}
+
 function isOverlayOpen() {
   return openOverlayCount > 0;
+}
+
+function isSidePanelOpen() {
+  return Boolean(els.sidePanel && els.sidePanel.classList.contains("is-open"));
 }
 
 function turnInMotion() {
@@ -425,34 +466,51 @@ function guardTableAction() {
 function ensureAudio() {
   if (!soundOn) return;
   try {
-    if (!audioCtx) {
+    if (!audioCtx || audioCtx.state === "closed") {
       const AudioClass = window.AudioContext || window.webkitAudioContext;
       if (!AudioClass) return;
       audioCtx = new AudioClass();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.9;
+      masterGain.connect(audioCtx.destination);
+      audioCtx.onstatechange = () => updateSoundButton();
     }
-    if (audioCtx.state === "suspended") audioCtx.resume();
+    if (!masterGain) {
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.9;
+      masterGain.connect(audioCtx.destination);
+    }
+    if (audioCtx.state !== "running") {
+      audioCtx.resume().catch(() => {});
+    }
   } catch {
     audioCtx = null;
+    masterGain = null;
   }
 }
 
 function tone(freq, duration, type = "sine", volume = 0.05, endFreq = null, delay = 0) {
-  if (!soundOn || !audioCtx) return;
-  const start = audioCtx.currentTime + delay;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = type;
-  osc.frequency.setValueAtTime(freq, start);
-  if (endFreq) {
-    osc.frequency.exponentialRampToValueAtTime(Math.max(30, endFreq), start + duration);
+  if (!soundOn || !audioCtx || !masterGain) return;
+  try {
+    const start = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    if (endFreq) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(30, endFreq), start + duration);
+    }
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(start);
+    osc.stop(start + duration + 0.03);
+  } catch {
+    audioCtx = null;
+    masterGain = null;
   }
-  gain.gain.setValueAtTime(0.0001, start);
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.012);
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start(start);
-  osc.stop(start + duration + 0.03);
 }
 
 function playSound(name) {
@@ -520,9 +578,15 @@ function playSound(name) {
 
 function updateSoundButton() {
   if (!els.soundBtn) return;
+  const waiting = soundOn && audioCtx && audioCtx.state !== "running";
   els.soundBtn.setAttribute("aria-pressed", String(soundOn));
+  els.soundBtn.classList.toggle("is-waiting", Boolean(waiting));
   els.soundBtn.querySelector(".sound-icon").textContent = soundOn ? "♪" : "∅";
-  els.soundBtn.querySelector(".sound-label").textContent = soundOn ? "SOUND ON" : "MUTED";
+  els.soundBtn.querySelector(".sound-label").textContent = !soundOn
+    ? "MUTED"
+    : waiting
+      ? "TAP FOR SOUND"
+      : "SOUND ON";
 }
 
 function mountOverlay(innerHtml, options = {}) {
@@ -643,7 +707,7 @@ async function showRules() {
       </div>
       <div class="rule-item">
         <div class="rule-icon">$</div>
-        <div><strong>STARTING CASH</strong><p>Everyone begins with $3,000. Collect $200 whenever you pass GO.</p></div>
+        <div><strong>STARTING CASH</strong><p>Everyone begins with ${money(rulesStartingCash())}. Collect $200 whenever you pass GO.</p></div>
       </div>
       <div class="rule-item">
         <div class="rule-icon">⌂</div>
@@ -773,7 +837,7 @@ function renderSetupPlayers() {
         <input id="player-name-${index}" data-name-index="${index}" maxlength="16" autocomplete="off" spellcheck="false" value="${esc(player.name)}" />
       </div>
       <div class="player-seat">
-        <strong>$3,000</strong>
+        <strong>${money(startingCash)}</strong>
         <span>START</span>
       </div>
     </div>
@@ -786,6 +850,8 @@ function renderSetupPlayers() {
       showAvatarPicker(Number(button.dataset.avatarIndex));
     });
   });
+
+  updateSetupCashUI();
 
   els.setupPlayers.querySelectorAll("[data-name-index]").forEach((input) => {
     input.addEventListener("input", () => {
@@ -824,6 +890,7 @@ function setSetupCount(count) {
 function startGameFromSetup() {
   ensureAudio();
   playSound("buy");
+  normalizeStartingCash();
   ensureUniqueSetupAvatars();
   const definitions = setupPlayers.slice(0, setupCount).map((player, index) => ({
     name: player.name.trim() || `Player ${index + 1}`,
@@ -831,10 +898,11 @@ function startGameFromSetup() {
     color: player.color,
   }));
 
+  setSidePanelOpen(false);
   els.setupScreen.classList.add("is-leaving");
   els.gameScreen.classList.remove("is-hidden");
 
-  launchGame(definitions);
+  launchGame(definitions, startingCash);
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => els.gameScreen.classList.add("is-live"));
@@ -851,6 +919,7 @@ function startGameFromSetup() {
 }
 
 function showSetup() {
+  setSidePanelOpen(false);
   game = null;
   winShown = false;
   els.gameScreen.classList.remove("is-live");
@@ -860,17 +929,18 @@ function showSetup() {
   openOverlayCount = 0;
   activeOverlay = null;
   els.toastStack.innerHTML = "";
+  updateSetupCashUI();
   window.scrollTo({ top: 0, behavior: "smooth" });
   renderSetupPlayers();
 }
 
-function createGame(definitions) {
+function createGame(definitions, balance) {
   const players = definitions.map((definition, index) => ({
     id: index,
     name: definition.name,
     avatar: definition.avatar,
     color: definition.color || PLAYER_COLORS[index],
-    cash: START_CASH,
+    cash: balance,
     position: 0,
     inJail: false,
     jailTurns: 0,
@@ -889,6 +959,7 @@ function createGame(definitions) {
     })),
     active: 0,
     phase: "roll",
+    startingCash: balance,
     turnDoubles: 0,
     round: 1,
     lastDice: [1, 1],
@@ -902,15 +973,17 @@ function createGame(definitions) {
   };
 }
 
-function launchGame(definitions) {
-  game = createGame(definitions);
+function launchGame(definitions, balance = startingCash) {
+  startingCash = normalizeStartingCash(balance, false);
+  game = createGame(definitions, startingCash);
   winShown = false;
+  setSidePanelOpen(false);
   buildBoard();
   buildTokens();
   setDiceInstant(1, 1);
   renderAll();
   logEvent("✦", `The board is set. <strong>${esc(game.players[0].name)}</strong> opens the game.`, {
-    sub: "Each tycoon starts with $3,000.",
+    sub: `Each tycoon starts with ${money(startingCash)}.`,
   });
   setTimeout(() => {
     playSound("turn");
@@ -1088,15 +1161,18 @@ function updateTokenPositions() {
     let left = ((col - 0.5) / 11) * 100;
     let top = ((row - 0.5) / 11) * 100;
     const shift = 2.7;
+    const isActive = !game.gameOver && player.id === game.active && !player.bankrupt;
 
-    if (player.position >= 1 && player.position <= 9) top -= shift;
-    else if (player.position >= 11 && player.position <= 19) left += shift;
-    else if (player.position >= 21 && player.position <= 29) top += shift;
-    else if (player.position >= 31 && player.position <= 39) left -= shift;
+    if (!isActive) {
+      if (player.position >= 1 && player.position <= 9) top -= shift;
+      else if (player.position >= 11 && player.position <= 19) left += shift;
+      else if (player.position >= 21 && player.position <= 29) top += shift;
+      else if (player.position >= 31 && player.position <= 39) left -= shift;
+    }
 
     token.style.left = `${left}%`;
     token.style.top = `${top}%`;
-    token.classList.toggle("is-active", !game.gameOver && player.id === game.active && !player.bankrupt);
+    token.classList.toggle("is-active", isActive);
     token.classList.toggle("is-bankrupt", player.bankrupt);
   });
 }
@@ -1163,6 +1239,212 @@ function renderPlayers() {
       </div>
     `;
   }).join("");
+  renderMiniScoreboard();
+  renderInfoRails();
+}
+
+function renderMiniScoreboard() {
+  if (!game || !els.miniScoreboard) return;
+  els.miniScoreboard.innerHTML = game.players.map((player) => {
+    const active = !game.gameOver && player.id === game.active;
+    return `
+      <div class="mini-player ${active ? "is-active" : ""} ${player.bankrupt ? "is-bankrupt" : ""}" style="--pcolor:${player.color}" title="${esc(player.name)} · ${money(player.cash)}">
+        <span class="mini-avatar">${player.avatar}</span>
+        <span class="mini-name">${esc(player.name)}</span>
+        <span class="mini-cash">${money(player.cash)}</span>
+      </div>
+    `;
+  }).join("");
+}
+
+function setSidePanelOpen(open) {
+  if (!els.sidePanel) return;
+  const wasOpen = isSidePanelOpen();
+  const shouldOpen = Boolean(open && game);
+  els.sidePanel.classList.toggle("is-open", shouldOpen);
+  els.drawerBackdrop.classList.toggle("is-open", shouldOpen);
+  els.tableBtn.setAttribute("aria-expanded", String(shouldOpen));
+  if (shouldOpen) {
+    renderPlayers();
+    renderFeed();
+    setTimeout(() => els.sidePanelClose.focus({ preventScroll: true }), 120);
+  } else if (wasOpen) {
+    els.tableBtn.focus({ preventScroll: true });
+  }
+}
+
+function openSidePanel() {
+  setSidePanelOpen(true);
+}
+
+function closeSidePanel() {
+  setSidePanelOpen(false);
+}
+
+function toggleSidePanel() {
+  if (!game) return;
+  setSidePanelOpen(!els.sidePanel.classList.contains("is-open"));
+}
+
+function groupOwnedProperties(player) {
+  const groups = new Map();
+  [...player.props].sort((a, b) => a - b).forEach((index) => {
+    const tile = game.board[index];
+    const key = tile.type === "property" ? tile.group : tile.type;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(index);
+  });
+  return groups;
+}
+
+function renderPortfolioRail() {
+  if (!game || !els.portfolioList) return;
+  const ownedCount = game.board.filter((tile) => tile.owner !== null).length;
+  const scrollTop = els.portfolioList.scrollTop;
+  els.portfolioMeta.textContent = `${ownedCount} DEED${ownedCount === 1 ? "" : "S"}`;
+
+  els.portfolioList.innerHTML = game.players.map((player) => {
+    const active = !game.gameOver && player.id === game.active;
+    const groups = groupOwnedProperties(player);
+    let content = "";
+
+    if (!player.props.length) {
+      content = `<div class="portfolio-empty">No deeds yet</div>`;
+    } else {
+      content = [...groups.entries()].map(([key, indices]) => {
+        const first = game.board[indices[0]];
+        const groupColor = first.type === "property"
+          ? GROUPS[first.group].color
+          : first.type === "railroad"
+            ? "#59625a"
+            : "#6f8063";
+        const groupName = first.type === "property"
+          ? GROUPS[first.group].name
+          : first.type === "railroad"
+            ? "Railroads"
+            : "Utilities";
+
+        const cards = indices.map((index) => {
+          const tile = game.board[index];
+          const houseCount = tile.type === "property" ? tile.houses : 0;
+          const houseMarkup = houseCount === 5
+            ? `<span class="land-house hotel"></span>`
+            : Array.from({ length: houseCount }, () => `<span class="land-house"></span>`).join("");
+          const meta = tile.type === "property"
+            ? houseCount === 5
+              ? "HOTEL"
+              : houseCount > 0
+                ? `${houseCount} HOUSE${houseCount === 1 ? "" : "S"}`
+                : money(tile.price)
+            : tile.type === "railroad"
+              ? "RAILROAD"
+              : "UTILITY";
+
+          return `
+            <div class="land-card" style="--land-color:${groupColor}">
+              <span class="land-card-band"></span>
+              <span class="land-card-name">${esc(tile.short)}</span>
+              <span class="land-card-meta"><span>${meta}</span><span class="land-house-row">${houseMarkup}</span></span>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div class="portfolio-group">
+            <div class="portfolio-group-head">
+              <i style="--group-color:${groupColor}"></i>
+              <span>${groupName}</span>
+              <small>${indices.length}</small>
+            </div>
+            <div class="portfolio-cards">${cards}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    return `
+      <section class="portfolio-player ${active ? "is-active" : ""} ${player.bankrupt ? "is-bankrupt" : ""}" style="--pcolor:${player.color}">
+        <header class="portfolio-head">
+          <span class="portfolio-avatar">${player.avatar}</span>
+          <div class="portfolio-name">
+            <strong>${esc(player.name)}</strong>
+            <span>${money(player.cash)} · ${player.props.length} deed${player.props.length === 1 ? "" : "s"}</span>
+          </div>
+          ${active ? `<i class="portfolio-live">LIVE</i>` : ""}
+        </header>
+        ${content}
+      </section>
+    `;
+  }).join("");
+  els.portfolioList.scrollTop = scrollTop;
+}
+
+function renderStatsRail() {
+  if (!game || !els.statsPanel) return;
+
+  const purchasable = game.board.filter((tile) => ["property", "railroad", "utility"].includes(tile.type));
+  const owned = purchasable.filter((tile) => tile.owner !== null);
+  let houses = 0;
+  let hotels = 0;
+  game.board.forEach((tile) => {
+    if (tile.type !== "property") return;
+    if (tile.houses === 5) hotels += 1;
+    else houses += tile.houses;
+  });
+
+  const cashInPlay = game.players.reduce((total, player) => total + Math.max(0, player.cash), 0);
+  const jailed = game.players.filter((player) => player.inJail && !player.bankrupt).length;
+  const bankrupt = game.players.filter((player) => player.bankrupt).length;
+
+  const scrollTop = els.statsPanel.scrollTop;
+  els.statsRound.textContent = game.gameOver ? "FINAL" : `ROUND ${game.round}`;
+  els.statsPanel.innerHTML = `
+    <div class="stats-feature">
+      <span>CASH IN CIRCULATION</span>
+      <strong>${money(cashInPlay)}</strong>
+      <small>Across ${game.players.filter((player) => !player.bankrupt).length} active tycoon${game.players.filter((player) => !player.bankrupt).length === 1 ? "" : "s"}</small>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-tile"><span>HOUSES</span><strong>${houses}</strong></div>
+      <div class="stat-tile"><span>HOTELS</span><strong>${hotels}</strong></div>
+      <div class="stat-tile"><span>DEEDS OWNED</span><strong>${owned.length}</strong></div>
+      <div class="stat-tile"><span>UNOWNED</span><strong>${purchasable.length - owned.length}</strong></div>
+      <div class="stat-tile"><span>IN JAIL</span><strong>${jailed}</strong></div>
+      <div class="stat-tile"><span>BANKRUPT</span><strong>${bankrupt}</strong></div>
+    </div>
+    <div class="stats-subhead">BY TYCOON</div>
+    ${game.players.map((player) => {
+      const active = !game.gameOver && player.id === game.active;
+      const buildings = countBuildings(player);
+      const status = player.bankrupt
+        ? "Bankrupt"
+        : player.inJail
+          ? "In jail"
+          : `${player.props.length} deed${player.props.length === 1 ? "" : "s"}`;
+      return `
+        <div class="tycoon-row ${active ? "is-active" : ""} ${player.bankrupt ? "is-bankrupt" : ""}" style="--pcolor:${player.color}">
+          <div class="tycoon-main">
+            <span class="tycoon-avatar">${player.avatar}</span>
+            <div class="tycoon-copy">
+              <strong>${esc(player.name)}</strong>
+              <small>${status}</small>
+            </div>
+            <span class="tycoon-cash">${money(player.cash)}</span>
+          </div>
+          <div class="tycoon-buildings">
+            <span class="building-chip"><i></i><b>${buildings.houses}</b> house${buildings.houses === 1 ? "" : "s"}</span>
+            <span class="building-chip hotel-chip"><i></i><b>${buildings.hotels}</b> hotel${buildings.hotels === 1 ? "" : "s"}</span>
+          </div>
+        </div>
+      `;
+    }).join("")}
+  `;
+  els.statsPanel.scrollTop = scrollTop;
+}
+
+function renderInfoRails() {
+  renderPortfolioRail();
+  renderStatsRail();
 }
 
 function renderCenter() {
@@ -2553,6 +2835,7 @@ function showWinScreen() {
   if (!game || !game.gameOver || winShown) return;
   winShown = true;
   const winner = game.winner;
+  setSidePanelOpen(false);
   els.toastStack.innerHTML = "";
   const ranking = [...game.players].sort((a, b) => {
     if (a.bankrupt && !b.bankrupt) return 1;
@@ -2602,6 +2885,7 @@ function showWinScreen() {
   celebrate();
 
   const rematch = () => {
+    const startingBalance = game.startingCash;
     const definitions = game.players.map((player) => ({
       name: player.name,
       avatar: player.avatar,
@@ -2609,7 +2893,7 @@ function showWinScreen() {
     }));
     close();
     setTimeout(() => {
-      launchGame(definitions);
+      launchGame(definitions, startingBalance);
       showToast("♛", "A new game begins", "The table has been reset. Same rivals, new fortunes.", "card", 3200);
     }, 120);
   };
@@ -2622,6 +2906,7 @@ function showWinScreen() {
   overlay.querySelector("[data-new-lineup]").addEventListener("click", () => {
     playSound("click");
     close();
+    setSidePanelOpen(false);
     setTimeout(() => {
       els.setupScreen.classList.remove("is-hidden", "is-leaving");
       els.gameScreen.classList.remove("is-live");
@@ -2739,9 +3024,12 @@ function celebrate() {
 function cacheElements() {
   const ids = [
     "setupScreen", "setupPlayers", "countPicker", "startBtn", "setupRulesBtn",
+    "setupBalance", "heroStartingCash", "startingCashInput", "startCashPresets",
     "gameScreen", "board", "boardCenter", "tokensLayer", "playersList",
     "eventFeed", "roundChip", "assetsBtn", "soundBtn", "rulesBtn", "newGameBtn",
-    "sideRulesBtn", "turnAvatar", "turnName", "turnCash", "turnPropCount",
+    "sideRulesBtn", "miniScoreboard", "tableBtn", "sidePanel", "sidePanelClose",
+    "drawerBackdrop", "portfolioMeta", "portfolioList", "statsRound", "statsPanel",
+    "turnAvatar", "turnName", "turnCash", "turnPropCount", "turnAssetsBtn",
     "turnEyebrow", "turnConsole", "rollBtn", "rollBtnLabel", "jailActions",
     "payJailBtn", "useJailCardBtn", "turnHint", "diceZone", "die1", "die2",
     "chanceDeck", "chestDeck", "overlayRoot", "toastStack", "fxCanvas",
@@ -2760,6 +3048,35 @@ function bindEvents() {
     setSetupCount(Number(button.dataset.count));
   });
 
+  els.startCashPresets.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-start-cash]");
+    if (!button) return;
+    ensureAudio();
+    playSound("click");
+    normalizeStartingCash(Number(button.dataset.startCash));
+  });
+
+  els.startingCashInput.addEventListener("input", () => {
+    const parsed = Number(els.startingCashInput.value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      startingCash = clampStartingCash(parsed);
+      updateSetupCashUI(false);
+    }
+  });
+
+  els.startingCashInput.addEventListener("blur", () => {
+    const value = els.startingCashInput.value === "" ? startingCash : els.startingCashInput.value;
+    normalizeStartingCash(value);
+    els.startingCashInput.value = String(startingCash);
+  });
+
+  els.startingCashInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      els.startingCashInput.blur();
+    }
+  });
+
   els.startBtn.addEventListener("click", startGameFromSetup);
   els.setupRulesBtn.addEventListener("click", () => {
     ensureAudio();
@@ -2775,16 +3092,25 @@ function bindEvents() {
   els.sideRulesBtn.addEventListener("click", () => {
     ensureAudio();
     playSound("click");
+    closeSidePanel();
     if (guardTableAction()) return;
     showRules();
   });
 
   els.soundBtn.addEventListener("click", () => {
+    ensureAudio();
+    if (soundOn && audioCtx && audioCtx.state !== "running") {
+      audioCtx.resume().catch(() => {});
+      playSound("click");
+      updateSoundButton();
+      return;
+    }
     soundOn = !soundOn;
     updateSoundButton();
     if (soundOn) {
       ensureAudio();
       playSound("click");
+      showToast("♪", "Sound on", "Audio is live for the table.", "gain", 1800);
     }
   });
 
@@ -2825,19 +3151,62 @@ function bindEvents() {
   els.assetsBtn.addEventListener("click", () => {
     ensureAudio();
     playSound("click");
+    closeSidePanel();
     openAssetsModal();
   });
 
+  els.turnAssetsBtn.addEventListener("click", () => {
+    ensureAudio();
+    playSound("click");
+    openAssetsModal();
+  });
+
+  els.tableBtn.addEventListener("click", () => {
+    ensureAudio();
+    playSound("click");
+    toggleSidePanel();
+  });
+
+  els.sidePanelClose.addEventListener("click", () => {
+    playSound("click");
+    closeSidePanel();
+  });
+
+  els.drawerBackdrop.addEventListener("click", closeSidePanel);
+
   document.addEventListener("keydown", (event) => {
     if (event.code !== "Space") return;
-    if (!game || isOverlayOpen() || game.gameOver || game.phase !== "roll") return;
+    if (!game || isOverlayOpen() || isSidePanelOpen() || game.gameOver || game.phase !== "roll") return;
     if (document.activeElement && ["INPUT", "TEXTAREA", "BUTTON", "SELECT"].includes(document.activeElement.tagName)) return;
     event.preventDefault();
     ensureAudio();
     handleRoll();
   });
 
-  document.addEventListener("pointerdown", () => ensureAudio(), { once: true });
+  document.addEventListener("pointerdown", () => {
+    if (!soundOn) return;
+    ensureAudio();
+    updateSoundButton();
+  }, { passive: true });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isSidePanelOpen() && !isOverlayOpen()) {
+      closeSidePanel();
+    }
+  });
+
+  document.addEventListener("keydown", () => {
+    if (soundOn) ensureAudio();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && soundOn) ensureAudio();
+  });
+
+  window.addEventListener("focus", () => {
+    if (soundOn) ensureAudio();
+  });
+
   window.addEventListener("resize", resizeFx);
 }
 
@@ -2848,6 +3217,9 @@ function init() {
   renderSetupPlayers();
   bindEvents();
   updateSoundButton();
+  updateSetupCashUI();
+  els.tableBtn.setAttribute("aria-expanded", "false");
+  els.tableBtn.setAttribute("aria-controls", "sidePanel");
   if (window.matchMedia("(pointer: coarse)").matches) {
     const rollHint = document.querySelector(".roll-btn small");
     if (rollHint) rollHint.textContent = "Tap to roll";

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#07150f" />
   <title>Monopoly · Skyline Edition</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=7" />
 </head>
 <body>
   <div class="ambient" aria-hidden="true">
@@ -32,7 +32,7 @@
 
         <div class="hero-stats">
           <div><strong>2–4</strong><span>PLAYERS</span></div>
-          <div><strong>$3,000</strong><span>STARTING CASH</span></div>
+          <div><strong id="heroStartingCash">$3,000</strong><span>STARTING CASH</span></div>
           <div><strong>40</strong><span>SPACES</span></div>
         </div>
 
@@ -62,7 +62,7 @@
           </div>
           <div class="setup-balance">
             <small>STARTING BALANCE</small>
-            <strong>$3,000</strong>
+            <strong id="setupBalance">$3,000</strong>
           </div>
         </div>
 
@@ -72,6 +72,21 @@
             <button type="button" data-count="2">2</button>
             <button type="button" data-count="3">3</button>
             <button type="button" data-count="4">4</button>
+          </div>
+        </div>
+
+        <div class="start-cash-row">
+          <span>Starting cash</span>
+          <div class="start-cash-controls">
+            <div class="cash-presets" id="startCashPresets" role="group" aria-label="Starting cash presets">
+              <button type="button" data-start-cash="1500">1,500</button>
+              <button type="button" data-start-cash="3000" class="is-selected">3,000</button>
+              <button type="button" data-start-cash="5000">5,000</button>
+            </div>
+            <label class="cash-input">
+              <span>$</span>
+              <input id="startingCashInput" type="number" min="100" max="100000" step="100" value="3000" inputmode="numeric" aria-label="Custom starting cash" />
+            </label>
           </div>
         </div>
 
@@ -97,10 +112,16 @@
         <span class="brand-mark">M</span>
         <span class="brand-copy">MONOPOLY<small>SKYLINE EDITION</small></span>
       </div>
-      <div class="topbar-mode"><i></i> PASS &amp; PLAY</div>
+      <div class="table-strip">
+        <span class="table-strip-label"><i></i> PASS &amp; PLAY</span>
+        <div class="mini-scoreboard" id="miniScoreboard" aria-label="Live player standings"></div>
+      </div>
       <div class="topbar-actions">
         <button class="icon-btn" id="soundBtn" type="button" aria-label="Toggle sound" aria-pressed="true">
           <span class="sound-icon">♪</span><span class="sound-label">SOUND ON</span>
+        </button>
+        <button class="icon-btn table-btn" id="tableBtn" type="button" aria-label="Open players and activity">
+          <span class="table-icon">◫</span><span class="table-label">TABLE</span>
         </button>
         <button class="ghost-btn" id="rulesBtn" type="button">Rules</button>
         <button class="ghost-btn" id="newGameBtn" type="button">New game</button>
@@ -108,6 +129,17 @@
     </header>
 
     <main class="game-layout">
+      <aside class="info-rail portfolio-rail" id="portfolioRail" aria-label="Player property portfolios">
+        <div class="rail-title">
+          <div>
+            <div class="rail-kicker">THE PORTFOLIOS</div>
+            <h3>Deeds by color</h3>
+          </div>
+          <span class="rail-count" id="portfolioMeta">0 DEEDS</span>
+        </div>
+        <div class="rail-scroll" id="portfolioList"></div>
+      </aside>
+
       <section class="board-stage">
         <div class="board-frame">
           <div class="board" id="board">
@@ -171,9 +203,9 @@
                     <strong id="turnName">Player 1</strong>
                     <span class="turn-cash" id="turnCash">$3,000</span>
                   </div>
-                  <div class="turn-assets">
+                  <button class="turn-assets" id="turnAssetsBtn" type="button" title="Manage your properties">
                     <span id="turnPropCount">0</span><small>DEEDS</small>
-                  </div>
+                  </button>
                 </div>
 
                 <div class="dice-zone" id="diceZone" aria-label="Dice">
@@ -200,7 +232,20 @@
         </div>
       </section>
 
-      <aside class="side-panel">
+      <aside class="info-rail stats-rail" id="statsRail" aria-label="Game statistics">
+        <div class="rail-title">
+          <div>
+            <div class="rail-kicker">THE LEDGER</div>
+            <h3>City statistics</h3>
+          </div>
+          <span class="rail-count" id="statsRound">ROUND 1</span>
+        </div>
+        <div class="rail-scroll" id="statsPanel"></div>
+      </aside>
+
+      <div class="drawer-backdrop" id="drawerBackdrop"></div>
+      <aside class="side-panel" id="sidePanel">
+        <button class="drawer-close" id="sidePanelClose" type="button" aria-label="Close table panel">×</button>
         <div class="side-panel-head">
           <div>
             <div class="section-kicker">THE TABLE</div>
@@ -234,6 +279,6 @@
   <div class="toast-stack" id="toastStack" aria-live="polite"></div>
   <canvas id="fxCanvas" aria-hidden="true"></canvas>
 
-  <script src="game.js" defer></script>
+  <script src="game.js?v=7" defer></script>
 </body>
 </html>
