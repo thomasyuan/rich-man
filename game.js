@@ -1408,7 +1408,7 @@ function renderPortfolioRail() {
   const scrollTop = els.portfolioList.scrollTop;
   els.portfolioMeta.textContent = `${ownedCount} DEED${ownedCount === 1 ? "" : "S"}`;
 
-  els.portfolioList.innerHTML = game.players.map((player) => {
+  els.portfolioList.innerHTML = `<div class="portfolio-grid">${game.players.map((player) => {
     const active = !game.gameOver && player.id === game.active;
     const groups = groupOwnedProperties(player);
     let content = "";
@@ -1482,7 +1482,7 @@ function renderPortfolioRail() {
         ${content}
       </section>
     `;
-  }).join("");
+  }).join("")}</div>`;
   els.portfolioList.scrollTop = scrollTop;
 }
 
