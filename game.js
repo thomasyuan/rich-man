@@ -1416,20 +1416,16 @@ function renderPortfolioRail() {
     if (!player.props.length) {
       content = `<div class="portfolio-empty">No deeds yet</div>`;
     } else {
-      content = [...groups.entries()].map(([key, indices]) => {
+      const allCards = [];
+      [...groups.entries()].forEach(([key, indices]) => {
         const first = game.board[indices[0]];
         const groupColor = first.type === "property"
           ? GROUPS[first.group].color
           : first.type === "railroad"
             ? "#59625a"
             : "#6f8063";
-        const groupName = first.type === "property"
-          ? GROUPS[first.group].name
-          : first.type === "railroad"
-            ? "Railroads"
-            : "Utilities";
 
-        const cards = indices.map((index) => {
+        indices.forEach((index) => {
           const tile = game.board[index];
           const houseCount = tile.type === "property" ? tile.houses : 0;
           const houseMarkup = houseCount === 5
@@ -1447,26 +1443,16 @@ function renderPortfolioRail() {
                 ? "RAILROAD"
                 : "UTILITY";
 
-          return `
+          allCards.push(`
             <button class="land-card${tile.mortgaged ? " is-mortgaged" : ""}" type="button" data-deed="${index}" style="--land-color:${groupColor}" title="View deed for ${esc(tile.name)}">
               <span class="land-card-band"></span>
-              <span class="land-card-name">${esc(tile.name)}</span>
+              <span class="land-card-name">${esc(tile.short)}</span>
               <span class="land-card-meta"><span>${meta}</span><span class="land-house-row">${houseMarkup}</span></span>
             </button>
-          `;
-        }).join("");
-
-        return `
-          <div class="portfolio-group">
-            <div class="portfolio-group-head">
-              <i style="--group-color:${groupColor}"></i>
-              <span>${groupName}</span>
-              <small>${indices.length}</small>
-            </div>
-            <div class="portfolio-cards">${cards}</div>
-          </div>
-        `;
-      }).join("");
+          `);
+        });
+      });
+      content = `<div class="portfolio-cards">${allCards.join("")}</div>`;
     }
 
     return `

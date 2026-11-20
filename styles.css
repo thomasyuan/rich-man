@@ -2264,7 +2264,7 @@ input:focus-visible {
 .portfolio-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
   align-items: start;
 }
 
@@ -2275,7 +2275,7 @@ input:focus-visible {
 }
 
 .portfolio-cards .land-card {
-  margin-top: -26px;
+  margin-top: -40px;
 }
 
 .portfolio-cards .land-card:first-child {
@@ -2289,7 +2289,7 @@ input:focus-visible {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 8px 7px 5px;
+  padding: 7px 5px 5px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 5px;
@@ -2323,13 +2323,15 @@ button.land-card {
 }
 
 .land-card-name {
-  overflow: visible;
+  overflow: hidden;
   color: #1a2c22;
-  font-size: 10.5px;
+  font-size: 8.5px;
   font-weight: 800;
-  line-height: 1.18;
+  line-height: 1.15;
   letter-spacing: 0.01em;
+  text-overflow: ellipsis;
   text-transform: none;
+  white-space: nowrap;
 }
 
 .land-card.is-mortgaged .land-card-name {
@@ -4837,6 +4839,12 @@ button.land-card {
 
   .win-rank-row strong {
     font-size: 13px;
+  }
+}
+
+@media (min-width: 1700px) {
+  .land-card-name {
+    font-size: 10.5px;
   }
 }
 
