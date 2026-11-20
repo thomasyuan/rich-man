@@ -70,13 +70,51 @@ const BOARD = [
 
 const CHANCE_CARDS = [
   {
-    id: "ch-go",
-    title: "Take a well-earned promotion.",
-    text: "Advance to GO. Collect your salary as you pass through.",
+    id: "ch-boardwalk",
+    title: "The boardwalk is calling.",
+    text: "Advance to Boardwalk.",
     action: "move",
-    target: 0,
-    effect: "ADVANCE TO GO · +$200",
-    icon: "🚀",
+    target: 39,
+    effect: "ADVANCE TO BOARDWALK",
+    icon: "🏖️",
+  },
+  {
+    id: "ch-rail-a",
+    title: "All aboard.",
+    text: "Advance to the nearest railroad. If it is unowned, buy it. If it is owned, pay double the usual rent.",
+    action: "nearest",
+    nearest: "railroad",
+    multiplier: 2,
+    effect: "NEAREST RAILROAD · DOUBLE RENT",
+    icon: "🚂",
+  },
+  {
+    id: "ch-rail-b",
+    title: "Next stop, the rails.",
+    text: "Advance to the nearest railroad. If it is unowned, buy it. If it is owned, pay double the usual rent.",
+    action: "nearest",
+    nearest: "railroad",
+    multiplier: 2,
+    effect: "NEAREST RAILROAD · DOUBLE RENT",
+    icon: "🚞",
+  },
+  {
+    id: "ch-water",
+    title: "The city works in mysterious ways.",
+    text: "Advance to the nearest Water Works. If unowned, take the chance to buy it. If owned, throw the dice and pay the owner 10 times the amount thrown.",
+    action: "nearest",
+    nearest: "water",
+    effect: "NEAREST WATER WORKS · 10× DICE",
+    icon: "💧",
+  },
+  {
+    id: "ch-electric",
+    title: "The grid hums tonight.",
+    text: "Advance to the nearest Electric Company. If unowned, take the chance to buy it. If owned, throw the dice and pay the owner 10 times the amount thrown.",
+    action: "nearest",
+    nearest: "electric",
+    effect: "NEAREST ELECTRIC CO. · 10× DICE",
+    icon: "⚡",
   },
   {
     id: "ch-illinois",
@@ -95,25 +133,6 @@ const CHANCE_CARDS = [
     target: 11,
     effect: "ADVANCE TO ST. CHARLES PLACE",
     icon: "🎩",
-  },
-  {
-    id: "ch-nearest-rail",
-    title: "All aboard.",
-    text: "Advance to the nearest railroad. If it is owned, pay double the usual rent.",
-    action: "nearest",
-    nearest: "railroad",
-    multiplier: 2,
-    effect: "NEAREST RAILROAD · DOUBLE RENT",
-    icon: "🚂",
-  },
-  {
-    id: "ch-nearest-util",
-    title: "The city works in mysterious ways.",
-    text: "Advance to the nearest utility. If it is owned, throw the dice and pay ten times the roll.",
-    action: "nearest",
-    nearest: "utility",
-    effect: "NEAREST UTILITY · 10× DICE",
-    icon: "⚡",
   },
   {
     id: "ch-dividend",
@@ -142,6 +161,14 @@ const CHANCE_CARDS = [
     icon: "↩️",
   },
   {
+    id: "ch-jail",
+    title: "The police have questions.",
+    text: "Go directly to jail. Do not pass GO. Do not collect $200.",
+    action: "jail",
+    effect: "GO DIRECTLY TO JAIL",
+    icon: "🚔",
+  },
+  {
     id: "ch-repairs",
     title: "The inspector has notes.",
     text: "Make general repairs on all your properties: pay $25 for each house and $100 for each hotel.",
@@ -150,6 +177,24 @@ const CHANCE_CARDS = [
     perHotel: 100,
     effect: "PAY FOR REPAIRS",
     icon: "🔧",
+  },
+  {
+    id: "ch-school",
+    title: "The school tax comes due.",
+    text: "Pay $50 in school taxes.",
+    action: "money",
+    amount: -50,
+    effect: "PAY $50",
+    icon: "🎓",
+  },
+  {
+    id: "ch-reading",
+    title: "The 5:15 is right on time.",
+    text: "Take a trip to Reading Railroad. If you pass GO, collect $200.",
+    action: "move",
+    target: 5,
+    effect: "ADVANCE TO READING RAILROAD",
+    icon: "🚝",
   },
   {
     id: "ch-fine",
@@ -161,24 +206,6 @@ const CHANCE_CARDS = [
     icon: "🚨",
   },
   {
-    id: "ch-reading",
-    title: "The 5:15 is right on time.",
-    text: "Take a trip to Reading Railroad. If you pass GO, collect $200.",
-    action: "move",
-    target: 5,
-    effect: "ADVANCE TO READING RAILROAD",
-    icon: "🚞",
-  },
-  {
-    id: "ch-chairman",
-    title: "You have been elected chairman.",
-    text: "Pay each other player $50 for the privilege.",
-    action: "payEach",
-    amount: 50,
-    effect: "PAY EACH PLAYER $50",
-    icon: "🏛️",
-  },
-  {
     id: "ch-loan",
     title: "Your building loan matures.",
     text: "Collect $150 from the bank.",
@@ -186,14 +213,6 @@ const CHANCE_CARDS = [
     amount: 150,
     effect: "+$150",
     icon: "📈",
-  },
-  {
-    id: "ch-jail",
-    title: "The police have questions.",
-    text: "Go directly to jail. Do not pass GO. Do not collect $200.",
-    action: "jail",
-    effect: "GO DIRECTLY TO JAIL",
-    icon: "🚔",
   },
 ];
 
@@ -322,6 +341,15 @@ const CHEST_CARDS = [
     perHotel: 115,
     effect: "PAY FOR REPAIRS",
     icon: "🛠️",
+  },
+  {
+    id: "cc-back-three",
+    title: "A step backward.",
+    text: "Go back three spaces.",
+    action: "back",
+    steps: 3,
+    effect: "MOVE BACK 3 SPACES",
+    icon: "↩️",
   },
   {
     id: "cc-beauty",
@@ -706,6 +734,10 @@ async function showRules() {
         <div><strong>THE GOAL</strong><p>Bankrupt every rival. The last tycoon standing takes the city.</p></div>
       </div>
       <div class="rule-item">
+        <div class="rule-icon">⚄</div>
+        <div><strong>OPENING ORDER</strong><p>Everyone rolls the dice-off. The highest total moves first — ties reroll — then play turns clockwise.</p></div>
+      </div>
+      <div class="rule-item">
         <div class="rule-icon">$</div>
         <div><strong>STARTING CASH</strong><p>Everyone begins with ${money(rulesStartingCash())}. Collect $200 whenever you pass GO.</p></div>
       </div>
@@ -715,7 +747,7 @@ async function showRules() {
       </div>
       <div class="rule-item">
         <div class="rule-icon">✦</div>
-        <div><strong>CHANCE &amp; CHEST</strong><p>Draw a card and follow its instructions. Some are generous. Some are not.</p></div>
+        <div><strong>CHANCE &amp; CHEST</strong><p>Official 16-card decks. Water Works and Electric Company bills pay 10× a fresh dice roll.</p></div>
       </div>
       <div class="rule-item">
         <div class="rule-icon">⚄</div>
@@ -727,11 +759,11 @@ async function showRules() {
       </div>
       <div class="rule-item">
         <div class="rule-icon">⇄</div>
-        <div><strong>TRADING &amp; AUCTIONS</strong><p>Trade cash, deeds, and jail cards before rolling. Decline a purchase and it goes to auction.</p></div>
+        <div><strong>TRADING &amp; AUCTIONS</strong><p>Trade cash, deeds, and keys before rolling. The receiver pays 10% bank interest on mortgaged deeds. Decline a purchase and it goes to auction.</p></div>
       </div>
       <div class="rule-item">
         <div class="rule-icon">🏦</div>
-        <div><strong>MORTGAGES</strong><p>Mortgage unimproved property for half its value. Pay 10% interest to lift it.</p></div>
+        <div><strong>MORTGAGES</strong><p>Mortgage unimproved property for half its value. Pay the mortgage plus 10% to lift it.</p></div>
       </div>
       <div class="rule-item">
         <div class="rule-icon">⛓</div>
@@ -739,7 +771,7 @@ async function showRules() {
       </div>
       <div class="rule-item">
         <div class="rule-icon">⌁</div>
-        <div><strong>BANKRUPTCY</strong><p>If you cannot pay, your remaining cash and deeds go to your creditor.</p></div>
+        <div><strong>BANKRUPTCY</strong><p>Owe a player too much? All cash, deeds, buildings, and keys pass to them. Owe the bank? Buildings sell at half price and every deed is auctioned.</p></div>
       </div>
     </div>
     <div class="dialog-actions">
@@ -921,9 +953,6 @@ function startGameFromSetup() {
     els.setupScreen.classList.remove("is-leaving");
   }, 680);
 
-  setTimeout(() => {
-    showToast("🎲", "The city is open for business", "Roll the dice to make your first move.", "card", 3200);
-  }, 1200);
 }
 
 function showSetup() {
@@ -991,13 +1020,64 @@ function launchGame(definitions, balance = startingCash) {
   buildTokens();
   setDiceInstant(1, 1);
   renderAll();
-  logEvent("✦", `The board is set. <strong>${esc(game.players[0].name)}</strong> opens the game.`, {
+  logEvent("✦", "The board is set. A dice-off decides who moves first.", {
     sub: `Each tycoon starts with ${money(startingCash)}.`,
   });
-  setTimeout(() => {
-    playSound("turn");
-    updateUI();
-  }, 450);
+  runDiceOff();
+}
+
+async function runDiceOff() {
+  if (!game) return;
+  game.phase = "order";
+  game.note = "Rolling for the lead.";
+  updateUI();
+
+  const totals = new Map();
+  for (const player of game.players) {
+    const d1 = rand(1, 6);
+    const d2 = rand(1, 6);
+    await animateDice(d1, d2);
+    game.lastDice = [d1, d2];
+    const total = d1 + d2;
+    totals.set(player.id, total);
+    logEvent("🎲", `<strong>${esc(player.name)}</strong> rolled ${d1} + ${d2} = <strong>${total}</strong> in the dice-off.`, {
+      sub: "The highest total moves first.",
+    });
+    showToast("🎲", `${player.name} rolled ${total}`, "Rolling for the first move.", "card", 1600);
+    await wait(430);
+    if (game.gameOver) return;
+  }
+
+  let best = Math.max(...totals.values());
+  let winners = game.players.filter((player) => totals.get(player.id) === best);
+
+  while (winners.length > 1) {
+    showToast("⚄", "A tie — reroll", `${winners.map((player) => player.name).join(", ")} are tied at ${best}.`, "card", 2400);
+    logEvent("⚄", `<strong>${winners.map((player) => esc(player.name)).join(", ")}</strong> are tied at ${best}. Rerolling the dice-off.`);
+    const rerollers = [...winners];
+    for (const player of rerollers) {
+      const d1 = rand(1, 6);
+      const d2 = rand(1, 6);
+      await animateDice(d1, d2);
+      game.lastDice = [d1, d2];
+      const total = d1 + d2;
+      totals.set(player.id, total);
+      logEvent("🎲", `<strong>${esc(player.name)}</strong> rerolled ${d1} + ${d2} = <strong>${total}</strong>.`);
+      await wait(430);
+      if (game.gameOver) return;
+    }
+    best = Math.max(...rerollers.map((player) => totals.get(player.id)));
+    winners = rerollers.filter((player) => totals.get(player.id) === best);
+  }
+
+  const first = winners[0];
+  game.active = first.id;
+  game.phase = "roll";
+  game.note = "";
+  logEvent("🏁", `<strong>${esc(first.name)}</strong> won the dice-off and opens the game.`);
+  showToast("🏁", `${first.name} moves first`, "Won the dice-off. Roll the dice to open the game.", "gain", 3200);
+  playSound("turn");
+  updateUI();
 }
 
 function getCoords(index) {
@@ -1491,6 +1571,8 @@ function renderCenter() {
     els.rollBtnLabel.textContent = "MAKING DEALS";
   } else if (phase === "ending") {
     els.rollBtnLabel.textContent = "PASSING THE DICE";
+  } else if (phase === "order") {
+    els.rollBtnLabel.textContent = "ROLLING FOR THE LEAD";
   } else if (inJail) {
     els.rollBtnLabel.textContent = "ROLL FOR DOUBLES";
   } else {
@@ -1517,6 +1599,8 @@ function renderCenter() {
     els.turnHint.textContent = "Watch your token. Every stop matters.";
   } else if (phase === "resolving") {
     els.turnHint.textContent = "Reading the fine print…";
+  } else if (phase === "order") {
+    els.turnHint.textContent = "Rolling for the lead — highest total moves first.";
   } else {
     els.turnHint.textContent = "Next tycoon, step up.";
   }
@@ -2125,14 +2209,32 @@ async function applyCard(card, player, type) {
     }
 
     case "nearest": {
-      const targets = card.nearest === "railroad" ? [5, 15, 25, 35] : [12, 28];
+      const targets = card.nearest === "railroad" ? [5, 15, 25, 35] : card.nearest === "water" ? [28] : [12];
       let target = targets.find((index) => index > player.position);
       if (target === undefined) target = targets[0];
       await movePlayerTo(player, target);
       if (!game || game.gameOver) return;
+
+      if (card.nearest === "water" || card.nearest === "electric") {
+        const tile = game.board[target];
+        if (tile.owner === null || tile.owner === player.id || tile.mortgaged) {
+          await resolveLanding(player, game.lastDice[0] + game.lastDice[1]);
+          break;
+        }
+        const d1 = rand(1, 6);
+        const d2 = rand(1, 6);
+        await animateDice(d1, d2);
+        game.lastDice = [d1, d2];
+        const rollTotal = d1 + d2;
+        logEvent("🎲", `<strong>${esc(player.name)}</strong> rolled ${d1} + ${d2} = <strong>${rollTotal}</strong> for the utility bill.`, {
+          sub: `${game.board[target].name} owner collects ${money(rollTotal * 10)}.`,
+        });
+        await resolveLanding(player, rollTotal, { utilityTenfold: true });
+        break;
+      }
+
       await resolveLanding(player, game.lastDice[0] + game.lastDice[1], {
         rentMultiplier: card.multiplier || 1,
-        utilityTenfold: card.nearest === "utility",
       });
       break;
     }
@@ -2492,9 +2594,9 @@ async function payBank(player, amount, reason) {
   const remaining = player.cash;
   player.cash = 0;
   if (remaining > 0) showFloat(player, `-${money(remaining)}`, "loss");
-  markBankrupt(player, null);
   updateUI();
   await showBankruptcyDialog(player, null, reason);
+  await settleBankruptcy(player, null);
   if (checkForWinner()) scheduleWinScreen();
   return false;
 }
@@ -2516,51 +2618,100 @@ async function payMoney(from, to, amount, reason) {
     showFloat(to, `+${money(remaining)}`, "gain");
   }
   if (remaining > 0) showFloat(from, `-${money(remaining)}`, "loss");
-  markBankrupt(from, to);
   updateUI();
   playSound("bankrupt");
   await showBankruptcyDialog(from, to, reason);
+  await settleBankruptcy(from, to);
   if (checkForWinner()) scheduleWinScreen();
   return false;
 }
 
-function markBankrupt(player, creditor) {
+function mortgageInterest(tile) {
+  return Math.ceil(mortgageValue(tile) * 0.1);
+}
+
+async function settleBankruptcy(player, creditor) {
   player.bankrupt = true;
   player.inJail = false;
+  player.jailTurns = 0;
 
-  player.props.forEach((index) => {
-    const tile = game.board[index];
-    tile.houses = 0;
-    if (creditor) {
+  const deeds = [...player.props];
+
+  if (creditor) {
+    let interest = 0;
+    deeds.forEach((index) => {
+      const tile = game.board[index];
+      if (tile.mortgaged) interest += mortgageInterest(tile);
+    });
+
+    deeds.forEach((index) => {
+      const tile = game.board[index];
       tile.owner = creditor.id;
       if (!creditor.props.includes(index)) creditor.props.push(index);
-    } else {
-      tile.owner = null;
-      tile.mortgaged = false;
+    });
+    player.props = [];
+
+    if (player.getOut > 0) {
+      creditor.getOut += player.getOut;
+      player.getOut = 0;
     }
+
+    logEvent("☠", `<strong>${esc(player.name)}</strong> is bankrupt.`, {
+      sub: `All cash, deeds, buildings, and keys pass to ${creditor.name}.`,
+    });
+    playSound("bankrupt");
+
+    if (interest > 0) {
+      const paid = Math.min(creditor.cash, interest);
+      creditor.cash -= paid;
+      showToast("🏦", "Mortgage interest", `${creditor.name} paid ${money(paid)} to the bank on the seized deeds.`, "loss", 3400);
+      logEvent("🏦", `<strong>${esc(creditor.name)}</strong> paid <strong>${money(paid)}</strong> in 10% bank interest on mortgaged deeds.`);
+      flashCash(creditor.id, "down");
+    }
+    updateUI();
+    return;
+  }
+
+  deeds.forEach((index) => {
+    const tile = game.board[index];
+    tile.houses = 0;
   });
   player.props = [];
-
-  if (player.getOut > 0) {
-    if (creditor) creditor.getOut += player.getOut;
-    player.getOut = 0;
-  }
-
-  if (player.cash > 0) {
-    player.cash = 0;
-  }
+  if (player.getOut > 0) player.getOut = 0;
 
   logEvent("☠", `<strong>${esc(player.name)}</strong> is bankrupt.`, {
-    sub: creditor ? `Remaining assets go to ${creditor.name}.` : "The bank reclaims everything.",
+    sub: "Buildings sold to the bank at half price. Every deed goes to auction.",
   });
   playSound("bankrupt");
+  updateUI();
+
+  for (const index of deeds) {
+    if (!game || game.gameOver) break;
+    const tile = game.board[index];
+    tile.owner = null;
+    tile.houses = 0;
+    renderAll();
+
+    const active = game.players[game.active];
+    const initiator = active && !active.bankrupt ? active : game.players.filter((item) => !item.bankrupt)[0];
+    if (!initiator) break;
+
+    await runAuction(tile, initiator);
+
+    if (tile.owner === null) {
+      tile.mortgaged = false;
+      showToast("🏦", "Unsold deed", `${tile.name} found no bidders and returns to the bank.`, "", 2800);
+      logEvent("🏦", `<strong>${esc(tile.name)}</strong> received no bids. It returns to the bank.`);
+      renderAll();
+    }
+  }
 }
 
 function showBankruptcyDialog(player, creditor, reason) {
   return new Promise((resolve) => {
     const text = creditor
-      ? `${esc(player.name)} cannot cover the ${esc(reason)}. Their remaining cash, deeds, and jail cards now pass to ${esc(creditor.name)}.`
-      : `${esc(player.name)} cannot cover the ${esc(reason)}. The bank seizes their remaining cash and every deed.`;
+      ? `${esc(player.name)} cannot cover the ${esc(reason)}. All cash, deeds, buildings, and jail keys pass to ${esc(creditor.name)}, who pays the bank 10% interest on any mortgaged deeds.`
+      : `${esc(player.name)} cannot cover the ${esc(reason)}. Buildings are sold to the bank at half price, and every deed goes up for auction.`;
     const { overlay, close } = mountOverlay(`
       <div class="notice-card danger">
         <div class="notice-emblem">☠</div>
@@ -2985,6 +3136,10 @@ function tradeSideMarkup(player, side, label) {
           <input type="number" min="0" max="${player.cash}" step="10" value="0" data-trade-cash="${side}" />
         </span>
       </label>
+      <div class="trade-interest">
+        <span>10% BANK INTEREST ON DEEDS RECEIVED</span>
+        <b data-trade-interest="${side}">$0</b>
+      </div>
       <div class="trade-assets-scroll">
         ${hasAssets ? [
           ...properties.map((index) => tradeAssetRow(game.board[index], index, side)),
@@ -3055,9 +3210,26 @@ function openTradeModal() {
         ${tradeSideMarkup(partner, "take", "YOU RECEIVE")}
       </div>
     `;
+    refreshInterest();
+  };
+
+  const interestFor = (side) => {
+    return [...overlay.querySelectorAll(`[data-trade-prop][data-trade-side="${side}"]:checked`)].reduce((total, input) => {
+      const tile = game.board[Number(input.dataset.tradeProp)];
+      return tile.mortgaged ? total + mortgageInterest(tile) : total;
+    }, 0);
+  };
+
+  const refreshInterest = () => {
+    const giveEl = overlay.querySelector('[data-trade-interest="give"]');
+    const takeEl = overlay.querySelector('[data-trade-interest="take"]');
+    if (giveEl) giveEl.textContent = money(interestFor("take"));
+    if (takeEl) takeEl.textContent = money(interestFor("give"));
   };
 
   renderBuilder();
+
+  overlay.addEventListener("change", refreshInterest);
 
   overlay.addEventListener("click", async (event) => {
     const partnerButton = event.target.closest("[data-trade-partner]");
@@ -3123,7 +3295,7 @@ function openTradeModal() {
   });
 }
 
-function tradeItemMarkup(properties, cash, jail) {
+function tradeItemMarkup(properties, cash, jail, interest = 0) {
   const items = [];
   properties.forEach((index) => {
     const tile = game.board[index];
@@ -3135,6 +3307,9 @@ function tradeItemMarkup(properties, cash, jail) {
   if (jail) {
     items.push(`<div class="trade-offer-item"><i style="--asset-color:var(--gold)"></i>Get Out of Jail Free<strong>KEY</strong></div>`);
   }
+  if (interest > 0) {
+    items.push(`<div class="trade-offer-item is-interest"><i style="--asset-color:var(--gold)"></i>10% Bank Interest Due<strong>${money(interest)}</strong></div>`);
+  }
   return items.length ? items.join("") : `<div class="trade-offer-none">Nothing</div>`;
 }
 
@@ -3142,6 +3317,14 @@ function showTradeOffer(offer) {
   return new Promise((resolve) => {
     const from = game.players[offer.fromId];
     const to = game.players[offer.toId];
+    const toInterest = offer.giveProps.reduce((total, index) => {
+      const tile = game.board[index];
+      return tile.mortgaged ? total + mortgageInterest(tile) : total;
+    }, 0);
+    const fromInterest = offer.takeProps.reduce((total, index) => {
+      const tile = game.board[index];
+      return tile.mortgaged ? total + mortgageInterest(tile) : total;
+    }, 0);
     let accepted = false;
 
     const { overlay, close } = mountOverlay(`
@@ -3155,11 +3338,11 @@ function showTradeOffer(offer) {
       <div class="trade-offer-grid">
         <div class="trade-offer-side">
           <span>${esc(from.name).toUpperCase()} GIVES</span>
-          ${tradeItemMarkup(offer.giveProps, offer.giveCash, offer.giveJail)}
+          ${tradeItemMarkup(offer.giveProps, offer.giveCash, offer.giveJail, fromInterest)}
         </div>
         <div class="trade-offer-side">
           <span>${esc(to.name).toUpperCase()} GIVES</span>
-          ${tradeItemMarkup(offer.takeProps, offer.takeCash, offer.takeJail)}
+          ${tradeItemMarkup(offer.takeProps, offer.takeCash, offer.takeJail, toInterest)}
         </div>
       </div>
       <div class="dialog-actions">
@@ -3201,11 +3384,34 @@ function executeTrade(offer) {
   if (offer.giveJail && from.getOut < 1) return false;
   if (offer.takeJail && to.getOut < 1) return false;
 
+  const toInterest = offer.giveProps.reduce((total, index) => {
+    const tile = game.board[index];
+    return tile.mortgaged ? total + mortgageInterest(tile) : total;
+  }, 0);
+  const fromInterest = offer.takeProps.reduce((total, index) => {
+    const tile = game.board[index];
+    return tile.mortgaged ? total + mortgageInterest(tile) : total;
+  }, 0);
+  const fromAfter = from.cash + offer.takeCash - offer.giveCash;
+  const toAfter = to.cash + offer.giveCash - offer.takeCash;
+  if (fromAfter < fromInterest || toAfter < toInterest) {
+    showToast("⇄", "Deal undone", "Not enough cash to pay the 10% bank interest on mortgaged deeds.", "loss", 3600);
+    logEvent("⇄", `A trade between <strong>${esc(from.name)}</strong> and <strong>${esc(to.name)}</strong> collapsed over mortgage interest.`);
+    return false;
+  }
+
   offer.giveProps.forEach((index) => transferProperty(index, from, to));
   offer.takeProps.forEach((index) => transferProperty(index, to, from));
 
-  from.cash += offer.takeCash - offer.giveCash;
-  to.cash += offer.giveCash - offer.takeCash;
+  from.cash = fromAfter - fromInterest;
+  to.cash = toAfter - toInterest;
+
+  if (fromInterest > 0) {
+    logEvent("🏦", `<strong>${esc(from.name)}</strong> paid <strong>${money(fromInterest)}</strong> bank interest on the deeds received.`);
+  }
+  if (toInterest > 0) {
+    logEvent("🏦", `<strong>${esc(to.name)}</strong> paid <strong>${money(toInterest)}</strong> bank interest on the deeds received.`);
+  }
 
   if (offer.giveJail) {
     from.getOut -= 1;
@@ -3221,12 +3427,13 @@ function executeTrade(offer) {
   burstConfetti(window.innerWidth / 2, window.innerHeight * 0.33, 30, [from.color, to.color, "#f3d88d"]);
   showToast("🤝", "Deal closed", `${from.name} and ${to.name} shook hands.`, "gain", 3200);
   logEvent("🤝", `<strong>${esc(from.name)}</strong> and <strong>${esc(to.name)}</strong> completed a trade.`, {
-    sub: `Cash, deeds, and keys changed hands.`,
+    sub: `Cash, deeds, keys, and 10% bank interest changed hands.`,
   });
   return true;
 }
 
 function runAuction(tile, initiator) {
+  const interest = tile.mortgaged ? mortgageInterest(tile) : 0;
   return new Promise((resolve) => {
     if (!game || game.gameOver) {
       resolve(null);
@@ -3246,7 +3453,9 @@ function runAuction(tile, initiator) {
     let finished = false;
 
     logEvent("⚖️", `<strong>${esc(tile.name)}</strong> goes to auction.`, {
-      sub: `Opened after ${initiator.name} declined the purchase.`,
+      sub: tile.mortgaged
+        ? `Mortgaged deed — the buyer also pays ${money(interest)} bank interest.`
+        : `Opened after ${initiator.name} declined the purchase.`,
     });
 
     const { overlay, close } = mountOverlay(`<div data-auction-body></div>`, {
@@ -3287,7 +3496,7 @@ function runAuction(tile, initiator) {
     const renderAuction = () => {
       const current = players[currentIndex];
       const minimum = highestBid > 0 ? highestBid + 10 : 10;
-      const canBid = current.cash >= minimum;
+      const canBid = current.cash >= minimum + interest;
       const color = tile.type === "property" ? GROUPS[tile.group].color : tile.type === "railroad" ? "#59625a" : "#6f8063";
       const kind = tile.type === "property" ? GROUPS[tile.group].name.toUpperCase() : tile.type === "railroad" ? "RAILROAD" : "UTILITY";
       const lightHeader = tile.type === "property" && (tile.group === "lightblue" || tile.group === "yellow");
@@ -3296,7 +3505,7 @@ function runAuction(tile, initiator) {
         <div class="auction-head ${lightHeader ? "is-light" : ""}" style="--auction-color:${color}">
           <small>AUCTION · ${kind}</small>
           <h2>${esc(tile.name)}</h2>
-          <span>List price ${money(tile.price)}</span>
+          <span>${tile.mortgaged ? `Mortgaged · buyer pays ${money(interest)} bank interest` : `List price ${money(tile.price)}`}</span>
         </div>
         <div class="auction-highest">
           <div>
@@ -3325,12 +3534,12 @@ function runAuction(tile, initiator) {
         <div class="auction-controls">
           <div class="auction-turnline">
             <strong>${esc(current.name)}</strong>
-            <small>${canBid ? `Minimum bid ${money(minimum)}` : "Not enough cash to raise"}</small>
+            <small>${canBid ? `Minimum bid ${money(minimum)}${interest ? ` + ${money(interest)} interest` : ""}` : "Not enough cash to cover the bid"}</small>
           </div>
           <div class="auction-bid-row">
             <label class="auction-bid-input">
               <span>$</span>
-              <input id="auctionBidInput" type="number" min="${minimum}" max="${current.cash}" step="10" value="${Math.min(current.cash, minimum)}" ${canBid ? "" : "disabled"} />
+              <input id="auctionBidInput" type="number" min="${minimum}" max="${current.cash - interest}" step="10" value="${Math.min(current.cash - interest, minimum)}" ${canBid ? "" : "disabled"} />
             </label>
             <button class="auction-bid-btn" type="button" data-auction-bid ${canBid ? "" : "disabled"}>BID</button>
             <button class="auction-pass-btn" type="button" data-auction-pass>PASS</button>
@@ -3338,7 +3547,7 @@ function runAuction(tile, initiator) {
           <div class="auction-quick">
             ${[10, 50, 100].map((increment) => `<button type="button" data-auction-inc="${increment}" ${canBid ? "" : "disabled"}>+$${increment}</button>`).join("")}
           </div>
-          <p class="auction-note">Only whole-dollar bids. A player with the highest bid cannot withdraw it.</p>
+          <p class="auction-note">${tile.mortgaged ? `Whole-dollar bids. The winning bidder pays the bid plus ${money(interest)} in mortgage interest.` : "Only whole-dollar bids. A player with the highest bid cannot withdraw it."}</p>
         </div>
       `;
     };
@@ -3371,8 +3580,8 @@ function runAuction(tile, initiator) {
         const input = overlay.querySelector("#auctionBidInput");
         const minimum = highestBid > 0 ? highestBid + 10 : 10;
         const amount = Math.floor(Number(input?.value) || 0);
-        if (amount < minimum || amount > current.cash) {
-          showToast("⚖️", "Bid not accepted", `Bid at least ${money(minimum)} and no more than your cash.`, "loss", 2400);
+        if (amount < minimum || amount + interest > current.cash) {
+          showToast("⚖️", "Bid not accepted", `Bid at least ${money(minimum)}${interest ? ` and cover the ${money(interest)} mortgage interest` : " within your cash."}`, "loss", 2400);
           return;
         }
         highestBid = amount;
@@ -3393,15 +3602,18 @@ function runAuction(tile, initiator) {
       return null;
     }
     const { winner, amount } = result;
-    winner.cash -= amount;
+    const totalDue = amount + interest;
+    winner.cash -= totalDue;
     tile.owner = winner.id;
     if (!winner.props.includes(game.board.indexOf(tile))) winner.props.push(game.board.indexOf(tile));
     updateUI();
     playSound("buy");
     burstConfetti(window.innerWidth / 2, window.innerHeight * 0.33, 38, [winner.color, "#f3d88d", "#fff4d8"]);
-    showToast("⚖️", "Auction won", `${winner.name} claimed ${tile.name} for ${money(amount)}.`, "gain", 3300);
+    showToast("⚖️", "Auction won", `${winner.name} claimed ${tile.name} for ${money(amount)}${interest ? ` + ${money(interest)} interest` : ""}.`, "gain", 3300);
     logEvent("⚖️", `<strong>${esc(winner.name)}</strong> won the auction for <strong>${esc(tile.name)}</strong>.`, {
-      sub: `Winning bid ${money(amount)}.`,
+      sub: interest
+        ? `Winning bid ${money(amount)} plus ${money(interest)} mortgage interest.`
+        : `Winning bid ${money(amount)}.`,
     });
     return result;
   });
