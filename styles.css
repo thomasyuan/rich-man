@@ -5371,3 +5371,453 @@ input:focus-visible {
     justify-content: flex-end;
   }
 }
+
+@media (min-width: 721px) {
+  .center-story {
+    margin-top: clamp(6px, 1.1cqw, 17px);
+  }
+
+  .center-story-kicker {
+    font-size: clamp(7px, 0.7cqw, 11px);
+  }
+
+  .board-tagline {
+    font-size: clamp(7px, 0.7cqw, 11px);
+  }
+
+  .center-middle {
+    justify-content: center;
+    gap: clamp(18px, 5cqw, 74px);
+    padding: 1.4% 2% 0.8%;
+  }
+
+  .center-flourish {
+    flex: 0 1 clamp(44px, 9cqw, 124px);
+    max-width: clamp(44px, 9cqw, 124px);
+  }
+
+  .deck-stack {
+    width: clamp(78px, 10.5cqw, 160px);
+    height: clamp(108px, 14.5cqw, 220px);
+  }
+
+  .deck-card {
+    border-radius: clamp(6px, 0.7cqw, 11px);
+  }
+
+  .deck-q {
+    font-size: clamp(26px, 3.6cqw, 54px);
+  }
+
+  .deck-card-front small {
+    font-size: clamp(7px, 0.68cqw, 10px);
+  }
+
+  .turn-console {
+    width: min(94%, 760px);
+    padding: clamp(14px, 1.6cqw, 24px) clamp(18px, 2.3cqw, 30px) clamp(12px, 1.5cqw, 22px);
+    border-radius: clamp(9px, 1.1cqw, 16px);
+  }
+
+  .turn-player {
+    gap: clamp(10px, 1.4cqw, 20px);
+  }
+
+  .turn-avatar {
+    width: clamp(44px, 6cqw, 88px);
+    height: clamp(44px, 6cqw, 88px);
+    font-size: clamp(24px, 3.2cqw, 48px);
+  }
+
+  .turn-meta {
+    gap: 0.15cqw;
+  }
+
+  .turn-eyebrow {
+    font-size: clamp(8px, 0.72cqw, 11px);
+  }
+
+  .turn-meta strong {
+    font-size: clamp(17px, 2.05cqw, 30px);
+  }
+
+  .turn-cash {
+    font-size: clamp(12px, 1.45cqw, 21px);
+  }
+
+  .turn-assets {
+    padding-left: clamp(10px, 1.4cqw, 20px);
+  }
+
+  .turn-assets span {
+    font-size: clamp(17px, 1.9cqw, 28px);
+  }
+
+  .turn-assets small {
+    font-size: clamp(7px, 0.62cqw, 10px);
+  }
+
+  .dice-zone {
+    gap: clamp(12px, 1.4cqw, 22px);
+    margin: 1.4% auto 1.5%;
+  }
+
+  .die-3d {
+    --die-size: clamp(42px, 5.6cqw, 80px);
+    --die-half: clamp(21px, 2.8cqw, 40px);
+  }
+
+  .roll-btn {
+    width: min(84%, 480px);
+    min-height: clamp(46px, 4.6cqw, 66px);
+    padding: 0.7cqw 1.4cqw;
+    border-radius: clamp(6px, 0.7cqw, 11px);
+    font-size: clamp(13px, 1.34cqw, 18px);
+  }
+
+  .roll-btn small {
+    font-size: clamp(8px, 0.62cqw, 10px);
+  }
+
+  .console-tools {
+    margin-top: 1%;
+  }
+
+  .console-tool {
+    padding: 0.4cqw 1.2cqw;
+    font-size: clamp(10px, 0.82cqw, 13px);
+  }
+
+  .jail-actions {
+    margin-top: 1%;
+    gap: 0.7cqw;
+  }
+
+  .jail-actions button {
+    padding: 0.45cqw 1cqw;
+    font-size: clamp(8px, 0.68cqw, 11px);
+  }
+
+  .turn-hint {
+    margin-top: 1.5%;
+    font-size: clamp(10px, 0.8cqw, 13px);
+  }
+
+  .trade-card {
+    width: min(1200px, 96vw);
+    max-height: calc(100dvh - 28px);
+    padding: clamp(30px, 3vw, 46px);
+  }
+
+  .trade-card .dialog-head {
+    margin-bottom: 24px;
+    gap: 20px;
+  }
+
+  .trade-card .dialog-kicker {
+    font-size: 9px;
+  }
+
+  .trade-card .dialog-head h2 {
+    font-size: clamp(36px, 3.6vw, 50px);
+  }
+
+  .trade-card .dialog-sub {
+    max-width: 820px;
+    font-size: clamp(12px, 1.05vw, 15px);
+    line-height: 1.5;
+  }
+
+  .trade-card .close-x {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+
+  .trade-partners {
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .trade-partner {
+    gap: 9px;
+    padding: 8px 15px 8px 8px;
+    font-size: 12px;
+  }
+
+  .trade-partner-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+  }
+
+  .trade-partner-cash {
+    font-size: 9px;
+  }
+
+  .trade-columns {
+    gap: 14px;
+  }
+
+  .trade-side-head {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .trade-side-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .trade-side-copy strong {
+    font-size: 18px;
+  }
+
+  .trade-side-copy span {
+    font-size: 9px;
+  }
+
+  .trade-side-label {
+    font-size: 8.5px;
+  }
+
+  .trade-cash-row {
+    padding: 11px 13px;
+    font-size: 10px;
+  }
+
+  .trade-cash-input {
+    padding: 6px 8px;
+    border-radius: 7px;
+  }
+
+  .trade-cash-input span {
+    font-size: 10px;
+  }
+
+  .trade-cash-input input {
+    width: 64px;
+    font-size: 12px;
+  }
+
+  .trade-assets-scroll {
+    max-height: min(41vh, 440px);
+    padding: 6px 9px 9px;
+  }
+
+  .trade-asset {
+    grid-template-columns: 16px 10px minmax(0, 1fr) auto;
+    gap: 9px;
+    padding: 9px 6px;
+  }
+
+  .trade-asset input {
+    width: 16px;
+    height: 16px;
+  }
+
+  .trade-asset-color {
+    width: 8px;
+    height: 26px;
+  }
+
+  .trade-asset-copy strong {
+    font-size: 15px;
+  }
+
+  .trade-asset-copy small {
+    font-size: 9px;
+  }
+
+  .trade-asset-value {
+    font-size: 10px;
+  }
+
+  .trade-vs {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .trade-empty {
+    padding: 28px 12px;
+    font-size: 15px;
+  }
+
+  .trade-card .dialog-actions {
+    margin-top: 22px;
+    padding-top: 20px;
+  }
+
+  .trade-card .btn {
+    min-height: 50px;
+    padding: 0 24px;
+    font-size: 11px;
+  }
+
+  .trade-offer-card {
+    width: min(820px, 100%);
+    padding: clamp(30px, 3vw, 44px);
+  }
+
+  .trade-offer-card .dialog-head h2 {
+    font-size: clamp(34px, 3.4vw, 46px);
+  }
+
+  .trade-offer-card .dialog-sub {
+    font-size: clamp(12px, 1vw, 15px);
+  }
+
+  .trade-offer-grid {
+    gap: 14px;
+    margin: 20px 0;
+  }
+
+  .trade-offer-side {
+    padding: 17px;
+  }
+
+  .trade-offer-side > span {
+    margin-bottom: 12px;
+    font-size: 8px;
+  }
+
+  .trade-offer-item {
+    gap: 9px;
+    padding: 8px 0;
+    font-size: 12.5px;
+  }
+
+  .trade-offer-item i {
+    width: 9px;
+    height: 9px;
+  }
+
+  .trade-offer-item strong {
+    font-size: 9px;
+  }
+
+  .trade-offer-none {
+    font-size: 14px;
+  }
+
+  .trade-offer-card .btn {
+    min-height: 48px;
+    font-size: 10px;
+  }
+
+  .auction-card {
+    width: min(760px, 100%);
+    padding: clamp(28px, 3vw, 40px);
+  }
+
+  .auction-head {
+    padding: 20px 22px;
+  }
+
+  .auction-head small {
+    font-size: 7px;
+  }
+
+  .auction-head h2 {
+    font-size: clamp(30px, 3.5vw, 44px);
+  }
+
+  .auction-head > span {
+    font-size: 10px;
+  }
+
+  .auction-highest {
+    padding: 14px 16px;
+  }
+
+  .auction-highest span {
+    font-size: 7.5px;
+  }
+
+  .auction-highest strong {
+    font-size: 26px;
+  }
+
+  .auction-highest small {
+    font-size: 9px;
+  }
+
+  .auction-players {
+    gap: 6px;
+    margin: 16px 0;
+  }
+
+  .auction-player {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    gap: 9px;
+    padding: 9px 11px;
+  }
+
+  .auction-player-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+
+  .auction-player-copy strong {
+    font-size: 14px;
+  }
+
+  .auction-player-copy small {
+    font-size: 7.5px;
+  }
+
+  .auction-player-status {
+    font-size: 7.5px;
+  }
+
+  .auction-turnline {
+    margin-bottom: 10px;
+    font-size: 10px;
+  }
+
+  .auction-turnline strong {
+    font-size: 18px;
+  }
+
+  .auction-turnline small {
+    font-size: 8px;
+  }
+
+  .auction-bid-input {
+    padding: 0 11px;
+    border-radius: 8px;
+  }
+
+  .auction-bid-input input {
+    padding: 10px 0;
+    font-size: 14px;
+  }
+
+  .auction-bid-btn {
+    min-width: 112px;
+    font-size: 10px;
+  }
+
+  .auction-pass-btn {
+    min-width: 76px;
+    font-size: 9px;
+  }
+
+  .auction-quick {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .auction-quick button {
+    padding: 6px 7px;
+    font-size: 8px;
+  }
+
+  .auction-note {
+    margin-top: 10px;
+    font-size: 8px;
+  }
+}
