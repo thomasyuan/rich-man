@@ -4106,6 +4106,15 @@ function bindEvents() {
   window.addEventListener("resize", resizeFx);
 }
 
+function registerPwa() {
+  if (!("serviceWorker" in navigator)) return;
+  const secure = location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname);
+  if (!secure) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
 function init() {
   cacheElements();
   buildDice();
@@ -4120,6 +4129,7 @@ function init() {
     const rollHint = document.querySelector(".roll-btn small");
     if (rollHint) rollHint.textContent = "Tap to roll";
   }
+  registerPwa();
 }
 
 init();
