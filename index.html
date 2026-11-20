@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#07150f" />
+  <title>Monopoly · Skyline Edition</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="ambient" aria-hidden="true">
+    <div class="ambient-glow ambient-glow-a"></div>
+    <div class="ambient-glow ambient-glow-b"></div>
+    <div class="ambient-grid"></div>
+  </div>
+
+  <section class="setup-screen" id="setupScreen">
+    <header class="setup-top">
+      <div class="brand">
+        <span class="brand-mark">M</span>
+        <span class="brand-copy">MONOPOLY<small>SKYLINE EDITION</small></span>
+      </div>
+      <button class="ghost-btn" id="setupRulesBtn" type="button">How to play</button>
+    </header>
+
+    <main class="setup-layout">
+      <section class="setup-hero">
+        <div class="hero-kicker"><span></span> PASS · PLAY · CONQUER</div>
+        <h1 class="hero-wordmark">MONO<span>POLY</span></h1>
+        <div class="hero-edition">THE SKYLINE EDITION</div>
+        <p class="hero-lede">One screen. Up to four tycoons. Build a property empire, dodge the taxman, and outlast your friends.</p>
+
+        <div class="hero-stats">
+          <div><strong>2–4</strong><span>PLAYERS</span></div>
+          <div><strong>$3,000</strong><span>STARTING CASH</span></div>
+          <div><strong>40</strong><span>SPACES</span></div>
+        </div>
+
+        <div class="hero-deed" aria-hidden="true">
+          <div class="hero-deed-band"></div>
+          <div class="hero-deed-crown">♛</div>
+          <div class="hero-deed-title">BOARDWALK</div>
+          <div class="hero-deed-rule"></div>
+          <div class="hero-deed-price">$400</div>
+          <div class="hero-deed-rows">
+            <span>RENT</span><b>$35</b>
+            <span>WITH HOTEL</span><b>$1,500</b>
+          </div>
+          <div class="hero-deed-seal">SOLD</div>
+        </div>
+
+        <div class="hero-tokens" aria-hidden="true">
+          <span>🦊</span><span>🐼</span><span>🐯</span><span>🦄</span>
+        </div>
+      </section>
+
+      <section class="setup-panel">
+        <div class="setup-panel-head">
+          <div>
+            <div class="section-kicker">THE LOBBY</div>
+            <h2>Take a seat</h2>
+          </div>
+          <div class="setup-balance">
+            <small>STARTING BALANCE</small>
+            <strong>$3,000</strong>
+          </div>
+        </div>
+
+        <div class="count-row">
+          <span>How many players?</span>
+          <div class="count-picker" id="countPicker" role="group" aria-label="Number of players">
+            <button type="button" data-count="2">2</button>
+            <button type="button" data-count="3">3</button>
+            <button type="button" data-count="4">4</button>
+          </div>
+        </div>
+
+        <div class="setup-players" id="setupPlayers"></div>
+
+        <button class="start-btn" id="startBtn" type="button">
+          <span>START THE GAME</span>
+          <span class="start-btn-icon">→</span>
+        </button>
+        <p class="setup-note">Pick an avatar, claim a name, then pass the device around. No accounts, no setup, no mercy.</p>
+      </section>
+    </main>
+
+    <footer class="setup-footer">
+      <span>A LOCAL MULTIPLAYER BOARD GAME</span>
+      <span>EST. 1935 · REIMAGINED</span>
+    </footer>
+  </section>
+
+  <section class="game-screen is-hidden" id="gameScreen">
+    <header class="topbar">
+      <div class="brand brand-small">
+        <span class="brand-mark">M</span>
+        <span class="brand-copy">MONOPOLY<small>SKYLINE EDITION</small></span>
+      </div>
+      <div class="topbar-mode"><i></i> PASS &amp; PLAY</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="soundBtn" type="button" aria-label="Toggle sound" aria-pressed="true">
+          <span class="sound-icon">♪</span><span class="sound-label">SOUND ON</span>
+        </button>
+        <button class="ghost-btn" id="rulesBtn" type="button">Rules</button>
+        <button class="ghost-btn" id="newGameBtn" type="button">New game</button>
+      </div>
+    </header>
+
+    <main class="game-layout">
+      <section class="board-stage">
+        <div class="board-frame">
+          <div class="board" id="board">
+            <div class="board-center" id="boardCenter">
+              <div class="center-story">
+                <div class="center-story-kicker">A GAME OF HIGH STAKES</div>
+                <div class="board-logo">MONO<span>POLY</span></div>
+                <div class="board-tagline">SKYLINE EDITION</div>
+              </div>
+
+              <div class="center-skyline" aria-hidden="true">
+                <svg viewBox="0 0 640 220" preserveAspectRatio="xMidYMax meet">
+                  <path
+                    d="M20 205V160h26v-16h18v16h22v-44h14v-22h8v22h14v44h32v-28h20v28h28v-58h12v-18h8v-34h6v34h8v18h12v58h33v-42h18v-20h14v-14h8v14h14v20h18v42h35v-70h12v-22h8v-14h6v14h8v22h12v70h31v-38h20v-22h16v60h28v-30h18v30h30v-52h14v-18h8v18h14v52h24v45H20z"
+                    fill="#806d48"
+                    fill-opacity=".055"
+                    stroke="#806d48"
+                    stroke-width="1"
+                    opacity=".7"
+                  />
+                  <g fill="none" stroke="#806d48" stroke-width="1" opacity=".38">
+                    <path d="M28 205v-38h22v22h26v-30h18v18h22v-26h17v-14h8v14h15v26h24v-22h32v22h29v-40h12v-26h8v26h12v40h33v-30h18v-12h14v12h18v30h35v-52h12v-32h8v32h12v52h31v-20h20v20h16v-44h28v22h18v-22h30v40h14v-24h8v24h14v40h24"/>
+                    <path d="M70 122v-12M94 122v-12M158 122v-12M184 122v-12M288 78v-16M294 78v-16M380 112v-14M404 112v-14M486 106v-14M510 106v-14"/>
+                  </g>
+                  <g fill="none" stroke="#806d48" stroke-width="1" opacity=".18">
+                    <path d="M40 205v-19h8v19M78 205v-18h8v18M112 205v-14h9v14M142 205v-22h8v22M190 205v-16h8v16M228 205v-10h7v10M264 205v-18h8v18M314 205v-24h8v24M348 205v-12h8v12M430 205v-18h8v18M468 205v-15h8v15M538 205v-20h8v20"/>
+                  </g>
+                  <circle cx="300" cy="112" r="76" fill="none" stroke="#806d48" opacity=".2"/>
+                  <circle cx="300" cy="112" r="61" fill="none" stroke="#806d48" opacity=".12"/>
+                  <path d="M0 214h640" stroke="#806d48" opacity=".3"/>
+                </svg>
+              </div>
+
+              <div class="center-middle">
+                <div class="deck-stack deck-chance" id="chanceDeck" aria-hidden="true">
+                  <div class="deck-card deck-card-back"></div>
+                  <div class="deck-card deck-card-front">
+                    <span class="deck-q">?</span>
+                    <small>CHANCE</small>
+                  </div>
+                </div>
+
+                <div class="center-flourish" aria-hidden="true">
+                  <span></span><i>◆</i><span></span>
+                </div>
+
+                <div class="deck-stack deck-chest" id="chestDeck" aria-hidden="true">
+                  <div class="deck-card deck-card-back"></div>
+                  <div class="deck-card deck-card-front">
+                    <span class="deck-q">✦</span>
+                    <small>COMMUNITY<br>CHEST</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="turn-console">
+                <div class="turn-player">
+                  <div class="turn-avatar" id="turnAvatar">🦊</div>
+                  <div class="turn-meta">
+                    <span class="turn-eyebrow" id="turnEyebrow">PLAYER 1'S TURN</span>
+                    <strong id="turnName">Player 1</strong>
+                    <span class="turn-cash" id="turnCash">$3,000</span>
+                  </div>
+                  <div class="turn-assets">
+                    <span id="turnPropCount">0</span><small>DEEDS</small>
+                  </div>
+                </div>
+
+                <div class="dice-zone" id="diceZone" aria-label="Dice">
+                  <div class="die-3d" id="die1"></div>
+                  <div class="die-3d" id="die2"></div>
+                </div>
+
+                <button class="roll-btn" id="rollBtn" type="button">
+                  <span id="rollBtnLabel">ROLL THE DICE</span>
+                  <small>Press SPACE</small>
+                </button>
+
+                <div class="jail-actions" id="jailActions">
+                  <button type="button" id="payJailBtn">Pay $50</button>
+                  <button type="button" id="useJailCardBtn">Use jail card</button>
+                </div>
+
+                <div class="turn-hint" id="turnHint">Roll to make your move. Doubles earn another turn.</div>
+              </div>
+            </div>
+
+            <div class="tokens-layer" id="tokensLayer" aria-hidden="true"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="side-panel-head">
+          <div>
+            <div class="section-kicker">THE TABLE</div>
+            <h2>Players</h2>
+          </div>
+          <span class="round-chip" id="roundChip">ROUND 1</span>
+        </div>
+
+        <div class="players-list" id="playersList"></div>
+
+        <section class="activity-panel">
+          <div class="activity-head">
+            <span>ACTIVITY</span>
+            <button type="button" class="text-btn" id="assetsBtn">MANAGE ASSETS</button>
+          </div>
+          <div class="event-feed" id="eventFeed"></div>
+        </section>
+
+        <div class="side-footer">
+          <div class="cash-key">
+            <span class="key-dot"></span>
+            <span>Pass GO and collect <strong>$200</strong></span>
+          </div>
+          <button type="button" class="rules-mini" id="sideRulesBtn">Game guide →</button>
+        </div>
+      </aside>
+    </main>
+  </section>
+
+  <div class="overlay-root" id="overlayRoot"></div>
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+  <canvas id="fxCanvas" aria-hidden="true"></canvas>
+
+  <script src="game.js" defer></script>
+</body>
+</html>
