@@ -1056,6 +1056,8 @@ input:focus-visible {
 }
 
 .board-frame {
+  position: relative;
+  z-index: 5;
   width: min(100%, calc(100dvh - var(--topbar-h) - 10px), 1900px);
   padding: clamp(5px, 0.58vw, 12px);
   border-radius: 18px;
@@ -2047,6 +2049,8 @@ input:focus-visible {
 }
 
 .info-rail {
+  position: relative;
+  z-index: 2;
   display: none;
   flex-direction: column;
   gap: 11px;
