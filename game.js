@@ -1417,7 +1417,14 @@ function renderPortfolioRail() {
       content = `<div class="portfolio-empty">No deeds yet</div>`;
     } else {
       const allCards = [];
-      [...groups.entries()].forEach(([key, indices]) => {
+      const groupRank = new Map([
+        ...Object.keys(GROUPS).map((key, index) => [key, index]),
+        ["railroad", Object.keys(GROUPS).length],
+        ["utility", Object.keys(GROUPS).length + 1],
+      ]);
+      [...groups.entries()]
+        .sort((a, b) => (groupRank.get(a[0]) ?? 99) - (groupRank.get(b[0]) ?? 99))
+        .forEach(([key, indices]) => {
         const first = game.board[indices[0]];
         const groupColor = first.type === "property"
           ? GROUPS[first.group].color
