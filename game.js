@@ -1435,15 +1435,17 @@ function renderPortfolioRail() {
           const houseMarkup = houseCount === 5
             ? `<span class="land-house hotel"></span>`
             : Array.from({ length: houseCount }, () => `<span class="land-house"></span>`).join("");
-          const meta = tile.type === "property"
-            ? houseCount === 5
-              ? "HOTEL"
-              : houseCount > 0
-                ? `${houseCount} HOUSE${houseCount === 1 ? "" : "S"}`
-                : money(tile.price)
-            : tile.type === "railroad"
-              ? "RAILROAD"
-              : "UTILITY";
+          const meta = tile.mortgaged
+            ? `MORTGAGED · ${money(mortgageValue(tile))}`
+            : tile.type === "property"
+              ? houseCount === 5
+                ? "HOTEL"
+                : houseCount > 0
+                  ? `${houseCount} HOUSE${houseCount === 1 ? "" : "S"}`
+                  : money(tile.price)
+              : tile.type === "railroad"
+                ? "RAILROAD"
+                : "UTILITY";
 
           return `
             <button class="land-card${tile.mortgaged ? " is-mortgaged" : ""}" type="button" data-deed="${index}" style="--land-color:${groupColor}" title="View deed for ${esc(tile.name)}">
