@@ -3735,21 +3735,12 @@ function showWinScreen() {
   const winnerAvatar = winner ? winner.avatar : "🏙️";
   const winnerColor = winner ? winner.color : "#2c5a43";
   const winnerName = winner ? winner.name : "No one";
-  const winnerCash = winner ? winner.cash : 0;
-  const winnerDeeds = winner ? winner.props.length : 0;
-  const winnerWorth = winner ? netWorth(winner) : 0;
-
   const { overlay, close } = mountOverlay(`
     <div class="win-crown">♛</div>
     <div class="win-avatar" style="--win-color:${winnerColor}">${winnerAvatar}</div>
     <div class="win-kicker">THE LAST TYCOON STANDING</div>
     <h2 class="win-name">${esc(winnerName)}</h2>
     <p class="win-sub">The skyline belongs to you. Every rival has been bought out, squeezed out, or sent packing.</p>
-    <div class="win-stats">
-      <div><span>CASH</span><strong>${money(winnerCash)}</strong></div>
-      <div><span>DEEDS</span><strong>${winnerDeeds}</strong></div>
-      <div><span>NET WORTH</span><strong>${money(winnerWorth)}</strong></div>
-    </div>
     <div class="win-rank">
       ${ranking.map((player, index) => `
         <div class="win-rank-row">

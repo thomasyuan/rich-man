@@ -3962,8 +3962,8 @@ button.land-card {
 }
 
 .win-card {
-  width: min(560px, 100%);
-  padding: clamp(27px, 4vw, 48px);
+  width: min(760px, 94vw);
+  padding: clamp(30px, 4vw, 50px);
   text-align: center;
   border: 1px solid rgba(232, 204, 140, 0.38);
   border-radius: 22px;
@@ -4024,36 +4024,6 @@ button.land-card {
   line-height: 1.5;
 }
 
-.win-stats {
-  display: flex;
-  justify-content: center;
-  gap: clamp(20px, 5vw, 46px);
-  margin: 24px 0;
-  padding: 18px 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-.win-stats div {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.win-stats span {
-  color: rgba(222, 204, 169, 0.4);
-  font-size: 6px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-}
-
-.win-stats strong {
-  color: var(--gold-bright);
-  font-family: var(--mono);
-  font-size: 18px;
-  font-weight: 600;
-}
-
 .win-actions {
   display: flex;
   gap: 8px;
@@ -4067,32 +4037,32 @@ button.land-card {
 .win-rank {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin-top: 14px;
+  gap: 10px;
+  margin-top: 24px;
 }
 
 .win-rank-row {
   display: grid;
-  grid-template-columns: 20px 24px minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: 38px 46px minmax(0, 1fr) auto;
+  gap: 14px;
   align-items: center;
-  padding: 6px 9px;
-  border-radius: 7px;
-  background: rgba(255, 255, 255, 0.035);
-  color: rgba(238, 228, 207, 0.66);
-  font-size: 7.5px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(238, 228, 207, 0.78);
+  font-size: 15px;
   text-align: left;
 }
 
 .win-rank-row b {
   color: var(--gold);
   font-family: var(--mono);
-  font-size: 7px;
+  font-size: 14px;
 }
 
 .win-rank-row i {
   font-style: normal;
-  font-size: 14px;
+  font-size: 28px;
 }
 
 .win-rank-row span {
@@ -4103,7 +4073,7 @@ button.land-card {
 
 .win-rank-row strong {
   font-family: var(--mono);
-  font-size: 8px;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -4838,7 +4808,18 @@ button.land-card {
   }
 
   .win-rank-row {
-    grid-template-columns: 16px 20px minmax(0, 1fr) auto;
+    grid-template-columns: 26px 32px minmax(0, 1fr) auto;
+    gap: 9px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .win-rank-row i {
+    font-size: 20px;
+  }
+
+  .win-rank-row strong {
+    font-size: 13px;
   }
 }
 
